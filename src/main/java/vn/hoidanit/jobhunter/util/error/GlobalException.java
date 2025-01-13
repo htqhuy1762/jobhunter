@@ -33,14 +33,14 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = {
-        NoResourceFoundException.class
+            NoResourceFoundException.class
     })
     public ResponseEntity<RestResponse<Object>> handleNotFoundException(Exception ex) {
         RestResponse<Object> restResponse = new RestResponse<Object>();
         restResponse.setStatusCode(HttpStatus.NOT_FOUND.value());
         restResponse.setError(ex.getMessage());
         restResponse.setMessage("404 Not Found. URL may not exist...");
-        
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(restResponse);
     }
 
@@ -57,5 +57,17 @@ public class GlobalException {
         res.setMessage(errors.size() > 1 ? errors : errors.get(0));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    @ExceptionHandler(value = {
+            StorageException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleFileUploadException(Exception exception) {
+        RestResponse<Object> restResponse = new RestResponse<Object>();
+        restResponse.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        restResponse.setError(exception.getMessage());
+        restResponse.setMessage("Exception upload file...");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(restResponse);
     }
 }
