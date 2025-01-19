@@ -10,6 +10,8 @@ import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.service.CompanyService;
 import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,13 @@ public class CompanyController {
     public ResponseEntity<ResultPaginationDTO> getCompany(@Filter Specification<Company> spec, Pageable pageable) {  
         
         return ResponseEntity.status(HttpStatus.OK).body(this.companyService.handleGetCompany(spec, pageable));
+    }
+
+    @GetMapping("/companies/{id}")
+    @ApiMessage("Get company by id")
+    public ResponseEntity<Company> getCompanyById(@PathVariable("id") long id) {
+        Optional<Company> company = this.companyService.findById(id);
+        return ResponseEntity.ok().body(company.get());
     }
 
     @PutMapping("/companies")
