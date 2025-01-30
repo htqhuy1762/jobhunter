@@ -55,11 +55,11 @@ public class AuthController {
 
         if (currentUserDB != null) {
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentUserDB.getId(), currentUserDB.getEmail(),
-                    currentUserDB.getName());
+                    currentUserDB.getName(), currentUserDB.getRole());
             res.setUser(userLogin);
         }
         // Create token
-        String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res.getUser());
+        String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
         res.setAccessToken(accessToken);
 
         // Create Refresh Token
@@ -94,6 +94,7 @@ public class AuthController {
             userLogin.setId(currentUserDB.getId());
             userLogin.setEmail(currentUserDB.getEmail()); 
             userLogin.setName(currentUserDB.getName());
+            userLogin.setRole(currentUserDB.getRole());
             userGetAccount.setUser(userLogin);       
         }
         return ResponseEntity.ok().body(userGetAccount);
@@ -122,11 +123,11 @@ public class AuthController {
 
         if (currentUserDB != null) {
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentUserDB.getId(), currentUserDB.getEmail(),
-                    currentUserDB.getName());
+                    currentUserDB.getName(), currentUserDB.getRole());
             res.setUser(userLogin);
         }
         // Create token
-        String accessToken = this.securityUtil.createAccessToken(email, res.getUser());
+        String accessToken = this.securityUtil.createAccessToken(email, res);
         res.setAccessToken(accessToken);
 
         // Create Refresh Token

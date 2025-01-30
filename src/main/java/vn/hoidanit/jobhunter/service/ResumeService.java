@@ -9,6 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.turkraft.springfilter.converter.FilterSpecification;
+import com.turkraft.springfilter.converter.FilterSpecificationConverter;
+import com.turkraft.springfilter.parser.FilterParser;
+import com.turkraft.springfilter.parser.node.FilterNode;
+
 import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Resume;
 import vn.hoidanit.jobhunter.domain.User;
@@ -19,6 +24,7 @@ import vn.hoidanit.jobhunter.domain.response.resume.ResUpdateResumeDTO;
 import vn.hoidanit.jobhunter.repository.JobRepository;
 import vn.hoidanit.jobhunter.repository.ResumeRepository;
 import vn.hoidanit.jobhunter.repository.UserRepository;
+import vn.hoidanit.jobhunter.util.SecurityUtil;
 
 @Service
 public class ResumeService {
@@ -26,10 +32,16 @@ public class ResumeService {
     private final UserRepository userRepository;
     private final JobRepository jobRepository;
 
-    public ResumeService(ResumeRepository resumeRepository, UserRepository userRepository, JobRepository jobRepository) {
+    private final FilterParser filterParser;
+    private final FilterSpecificationConverter filterSpecificationConverter;
+
+    public ResumeService(ResumeRepository resumeRepository, UserRepository userRepository, JobRepository jobRepository,
+            FilterParser filterParser, FilterSpecificationConverter filterSpecificationConverter) {
         this.resumeRepository = resumeRepository;
         this.userRepository = userRepository;
         this.jobRepository = jobRepository;
+        this.filterParser = filterParser;
+        this.filterSpecificationConverter = filterSpecificationConverter;
     }
 
     public Optional<Resume> fetchById(long id) {
@@ -55,10 +67,10 @@ public class ResumeService {
 
         Optional<Job> jobOptional = this.jobRepository.findById(resume.getJob().getId());
 
-        if(jobOptional.isEmpty()) {
+        if (jobOptional.isEmpty()) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -110,7 +122,7 @@ public class ResumeService {
         Page<Resume> pageUser = this.resumeRepository.findAll(spec, pageable);
         ResultPaginationDTO result = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
-        
+
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
 
@@ -120,9 +132,37 @@ public class ResumeService {
         result.setMeta(meta);
 
         // remove sensitive information
-        List<ResFetchResumeDTO> listResume = pageUser.getContent().stream().map(item -> this.getResume(item)).collect(Collectors.toList());
+        List<ResFetchResumeDTO> listResume = pageUser.getContent().stream().map(item -> this.getResume(item))
+                .collect(Collectors.toList());
         result.setData(listResume);
 
+        return result;
+    }
+
+    public ResultPaginationDTO fetchAllResumeByUser(Pageable pageable) {
+        // query builder
+        String email = SecurityUtil.getCurrentUserLogin().isPresent() == true ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+        FilterNode node = filterParser.parse("email='" + email + "'");
+        FilterSpecification<Resume> spec = filterSpecificationConverter.convert(node);
+        Page<Resume> pageResume = this.resumeRepository.findAll(spec, pageable);
+
+        ResultPaginationDTO result = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(pageResume.getTotalPages());
+        meta.setTotal(pageResume.getTotalElements());
+
+        result.setMeta(meta);
+        // remove sensitive data
+        List<ResFetchResumeDTO> listResume = pageResume.getContent()
+                .stream().map(item -> this.getResume(item))
+                .collect(Collectors.toList());
+
+        result.setData(listResume);
         return result;
     }
 }
