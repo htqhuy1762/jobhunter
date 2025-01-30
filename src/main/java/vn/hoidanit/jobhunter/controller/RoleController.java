@@ -70,9 +70,19 @@ public class RoleController {
         return ResponseEntity.ok().body(null);
     }
 
-    @GetMapping("/roles")
+@GetMapping("/roles")
     @ApiMessage("Get all roles")
     public ResponseEntity<ResultPaginationDTO> getAllRoles(@Filter Specification<Role> spec, Pageable pageable) {
         return ResponseEntity.ok().body(this.roleService.getRoles(spec, pageable));
+    }
+
+    @GetMapping("/roles/{id}")
+    @ApiMessage("Get a role by id")
+    public ResponseEntity<Role> getRoleById(@PathVariable("id") long id) throws IdInvalidException {
+        Role r = this.roleService.fetchById(id);
+        if (r == null) {
+            throw new IdInvalidException("Role with id = " + id + " does not exist.");
+        }
+        return ResponseEntity.ok().body(r);
     }
 }
