@@ -142,7 +142,7 @@ public class JobService {
         mt.setTotal(pageJob.getTotalElements());
 
         rs.setMeta(mt);
-        rs.setData(pageJob.getContent());
+        rs.setResult(pageJob.getContent());
 
         return rs;
     }

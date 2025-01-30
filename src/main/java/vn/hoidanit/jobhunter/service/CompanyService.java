@@ -44,7 +44,7 @@ public class CompanyService {
         mt.setTotal(companies.getTotalElements());
 
         rs.setMeta(mt);
-        rs.setData(companies.getContent());
+        rs.setResult(companies.getContent());
         return rs;
     }
 

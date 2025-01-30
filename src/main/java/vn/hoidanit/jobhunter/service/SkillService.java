@@ -59,7 +59,7 @@ public class SkillService {
         mt.setTotal(pageSkill.getTotalElements());
 
         rs.setMeta(mt);
-        rs.setData(pageSkill.getContent());
+        rs.setResult(pageSkill.getContent());
 
         return rs;  
     }

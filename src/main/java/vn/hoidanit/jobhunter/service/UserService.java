@@ -73,7 +73,7 @@ public class UserService {
         List<ResUserDTO> resUsers = users.getContent().stream().map(item -> this.convertToResUserDTO(item))
                 .collect(Collectors.toList());
 
-        rs.setData(resUsers);
+        rs.setResult(resUsers);
 
         return rs;
     }

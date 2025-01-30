@@ -134,7 +134,7 @@ public class ResumeService {
         // remove sensitive information
         List<ResFetchResumeDTO> listResume = pageUser.getContent().stream().map(item -> this.getResume(item))
                 .collect(Collectors.toList());
-        result.setData(listResume);
+        result.setResult(listResume);
 
         return result;
     }
@@ -162,7 +162,7 @@ public class ResumeService {
                 .stream().map(item -> this.getResume(item))
                 .collect(Collectors.toList());
 
-        result.setData(listResume);
+        result.setResult(listResume);
         return result;
     }
 }

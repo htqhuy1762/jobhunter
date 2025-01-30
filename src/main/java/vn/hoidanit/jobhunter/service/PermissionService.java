@@ -74,7 +74,7 @@ public class PermissionService {
         mt.setTotal(pPermissions.getTotalElements());
 
         rs.setMeta(mt);
-        rs.setData(pPermissions.getContent());
+        rs.setResult(pPermissions.getContent());
         return rs;
     }
 

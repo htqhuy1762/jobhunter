@@ -52,7 +52,8 @@ public class RoleController {
 
         // // check exist by name
         // if (this.roleService.existByName(r.getName())) {
-        //     throw new IdInvalidException("Role with name = " + r.getName() + " already exists.");
+        // throw new IdInvalidException("Role with name = " + r.getName() + " already
+        // exists.");
         // }
 
         // update role
@@ -70,7 +71,7 @@ public class RoleController {
         return ResponseEntity.ok().body(null);
     }
 
-@GetMapping("/roles")
+    @GetMapping("/roles")
     @ApiMessage("Get all roles")
     public ResponseEntity<ResultPaginationDTO> getAllRoles(@Filter Specification<Role> spec, Pageable pageable) {
         return ResponseEntity.ok().body(this.roleService.getRoles(spec, pageable));

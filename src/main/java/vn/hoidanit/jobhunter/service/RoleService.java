@@ -88,7 +88,7 @@ public class RoleService {
         mt.setTotal(pRole.getTotalElements());
 
         rs.setMeta(mt);
-        rs.setData(pRole.getContent());
+        rs.setResult(pRole.getContent());
         return rs;
     }
 }
