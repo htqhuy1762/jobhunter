@@ -54,7 +54,7 @@ public class JobController {
 
     @DeleteMapping("/jobs/{id}")
     @ApiMessage("Delete a job")
-    public ResponseEntity<Void> delete(@PathVariable long id) throws IdInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
         Optional<Job> currentJob = this.jobService.fetchJobById(id);
         if(!currentJob.isPresent()) {
             throw new IdInvalidException("Job not found");
@@ -66,7 +66,7 @@ public class JobController {
 
     @GetMapping("/jobs/{id}")
     @ApiMessage("Get a job by id")
-    public ResponseEntity<Job> getJobById(@PathVariable long id) throws IdInvalidException {
+    public ResponseEntity<Job> getJobById(@PathVariable("id") long id) throws IdInvalidException {
         Optional<Job> currentJob = this.jobService.fetchJobById(id);
         if(!currentJob.isPresent()) {
             throw new IdInvalidException("Job not found");
