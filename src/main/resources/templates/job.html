@@ -46,9 +46,12 @@
                                                 style="text-decoration: none;" th:text="${job.name}"></a>
                                         </div>
                                         <div style="font-size: 14px;" th:text="${job.company.name}"></div>
-                                        <div style="font-size: 14px;"><span
-                                                th:text="${#number.formatDecimal(job.salary, 0, 'COMMA', 0, 'POINT')}"></span>
-                                            đ</div>
+                                        <div style="font-size: 14px;">
+                                            <span
+                                                th:text="${#numbers.formatDecimal(job.salary, 0, 'COMMA', 0, 'POINT')}">
+                                            </span>
+                                            đ
+                                        </div>
                                         <div style="margin-top: 5px;">
                                             <span
                                                 style="font-size: 14px; background: #e8e8e8; padding: 3px; margin-right: 5px;  border-radius: 3px;"
