@@ -8,18 +8,21 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-
 @Service
 public class EmailService {
     private final MailSender mailSender;
     private final JavaMailSender javaMailSender;
-
-    public EmailService(MailSender mailSender, JavaMailSender javaMailSender) {
+    private final SpringTemplateEngine templateEngine;
+    
+    public EmailService(MailSender mailSender, JavaMailSender javaMailSender, SpringTemplateEngine templateEngine) {
         this.mailSender = mailSender;
         this.javaMailSender = javaMailSender;
+        this.templateEngine = templateEngine;
     }
 
     public void sendSimpleEmail() {
@@ -44,4 +47,9 @@ public class EmailService {
         }
     }
 
+    public void sendEmailFromTemplateSync(String to, String subject, String templateName) {
+        Context context = new Context();
+        String content = this.templateEngine.process(templateName, context);
+        this.sendEmailSync(to, subject, content, false, true);
+    }
 }

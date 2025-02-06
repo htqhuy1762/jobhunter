@@ -20,7 +20,8 @@ public class EmailController {
     @ApiMessage("Send simple email")
     public String sendSimpleEmail() {
         // this.emailService.sendSimpleEmail();
-        this.emailService.sendEmailSync("huysirox365@gmail.com", "test send email", "<h1><b>Hello</b></h1>", false, true);
-        return "ok";   
+        // this.emailService.sendEmailSync("huysirox365@gmail.com", "test send email", "<h1><b>Hello</b></h1>", false, true);
+        this.emailService.sendEmailFromTemplateSync("huysirox365@gmail.com", "test send email", "job");
+        return "ok";
     }
 }
