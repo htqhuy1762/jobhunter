@@ -18,6 +18,16 @@ import vn.hoidanit.jobhunter.domain.response.RestResponse;
 
 @RestControllerAdvice
 public class GlobalException {
+    //handle all exception
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        res.setMessage(ex.getMessage());
+        res.setError("Internal Server Error");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
     @ExceptionHandler(value = {
             UsernameNotFoundException.class,
             BadCredentialsException.class,
@@ -79,7 +89,6 @@ public class GlobalException {
         restResponse.setStatusCode(HttpStatus.FORBIDDEN.value());
         restResponse.setError("Forbidden");
         restResponse.setMessage(exception.getMessage());
-
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(restResponse);
     }
 }
