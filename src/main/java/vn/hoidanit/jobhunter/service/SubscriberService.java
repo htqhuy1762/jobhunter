@@ -3,6 +3,7 @@ package vn.hoidanit.jobhunter.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import vn.hoidanit.jobhunter.domain.Job;
@@ -12,7 +13,6 @@ import vn.hoidanit.jobhunter.domain.response.email.ResEmailJob;
 import vn.hoidanit.jobhunter.repository.JobRepository;
 import vn.hoidanit.jobhunter.repository.SkillRepository;
 import vn.hoidanit.jobhunter.repository.SubscriberRepository;
-import vn.hoidanit.jobhunter.service.EmailService;
 
 @Service
 public class SubscriberService {
@@ -31,6 +31,11 @@ public class SubscriberService {
         this.jobRepository = jobRepository;
         this.emailService = emailService;
     }
+    
+    // @Scheduled(cron = "*/10 * * * * *")
+    // public void testCron() {
+    //     System.out.println("test cron");
+    // }
 
     public boolean isExistsByEmail(String email) {
         return this.subscriberRepository.existsByEmail(email);
@@ -94,4 +99,7 @@ public class SubscriberService {
         }
     }
 
+    public Subscriber findByEmail(String email) {
+        return this.subscriberRepository.findByEmail(email);
+    }
 }
