@@ -19,6 +19,7 @@ import vn.hoidanit.jobhunter.domain.request.ReqLoginDTO;
 import vn.hoidanit.jobhunter.domain.response.ResCreateUserDTO;
 import vn.hoidanit.jobhunter.domain.response.ResLoginDTO;
 import vn.hoidanit.jobhunter.service.UserService;
+import vn.hoidanit.jobhunter.service.TokenService;
 import vn.hoidanit.jobhunter.util.SecurityUtil;
 import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
 import vn.hoidanit.jobhunter.util.error.IdInvalidException;
@@ -36,15 +37,18 @@ public class AuthController {
     private final SecurityUtil securityUtil;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
+
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
     public AuthController(AuthenticationManagerBuilder authenticationManagerBuilder, SecurityUtil securityUtil,
-            UserService userService, PasswordEncoder passwordEncoder) {
+            UserService userService, PasswordEncoder passwordEncoder, TokenService tokenService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtil = securityUtil;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
 
     @PostMapping("/auth/login")
@@ -70,8 +74,8 @@ public class AuthController {
         // Create Refresh Token
         String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getUsername(), res);
 
-        // update user
-        this.userService.updateUserToken(refreshToken, loginDTO.getUsername());
+        // Lưu refresh token vào Redis thay vì database
+        this.tokenService.saveRefreshToken(loginDTO.getUsername(), refreshToken);
 
         // set cookie
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
@@ -116,9 +120,8 @@ public class AuthController {
         Jwt decodedToken = this.securityUtil.checkValidRefreshToken(refresh_token);
         String email = decodedToken.getSubject();
 
-        // check user by token + email
-        User currentUser = this.userService.getUserByRefreshTokenAndEmail(refresh_token, email);
-        if (currentUser == null) {
+        // Kiểm tra token có tồn tại trong Redis không
+        if (!this.tokenService.validateRefreshToken(email, refresh_token)) {
             throw new IdInvalidException("Refresh token is invalid");
         }
 
@@ -138,8 +141,8 @@ public class AuthController {
         // Create Refresh Token
         String newRefreshToken = this.securityUtil.createRefreshToken(email, res);
 
-        // update user
-        this.userService.updateUserToken(newRefreshToken, email);
+        // Lưu refresh token mới vào Redis
+        this.tokenService.saveRefreshToken(email, newRefreshToken);
 
         // set cookie
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", newRefreshToken)
@@ -163,7 +166,25 @@ public class AuthController {
             throw new IdInvalidException("Access token is invalid");
         }
 
-        this.userService.updateUserToken(null, email);
+        // Lấy Access Token từ SecurityContext
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String accessToken = jwt.getTokenValue();
+
+            // Tính thời gian còn lại của token (để set TTL cho blacklist)
+            long expiresAt = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0;
+            long now = java.time.Instant.now().getEpochSecond();
+            long remainingTime = expiresAt - now;
+
+            // Chỉ blacklist nếu token còn thời gian sống
+            if (remainingTime > 0) {
+                this.tokenService.blacklistAccessToken(accessToken, email, remainingTime);
+            }
+        }
+
+        // Xóa refresh token khỏi Redis
+        this.tokenService.deleteRefreshToken(email);
 
         ResponseCookie deleteSpringCookie = ResponseCookie.from("refresh_token", null)
                 .httpOnly(true)
