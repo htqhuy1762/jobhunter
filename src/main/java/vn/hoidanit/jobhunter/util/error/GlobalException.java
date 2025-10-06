@@ -36,8 +36,19 @@ public class GlobalException {
     public ResponseEntity<RestResponse<Object>> handleIdException(Exception exception) {
         RestResponse<Object> restResponse = new RestResponse<Object>();
         restResponse.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        restResponse.setError("Exception occurred");
-        restResponse.setMessage(exception.getMessage());
+
+        // Cải thiện message cho rõ ràng hơn
+        if (exception instanceof BadCredentialsException) {
+            restResponse.setError("Authentication Failed");
+            restResponse.setMessage("Invalid email or password. Please check your credentials and try again.");
+        } else if (exception instanceof UsernameNotFoundException) {
+            restResponse.setError("Authentication Failed");
+            // Không tiết lộ user có tồn tại hay không (security best practice)
+            restResponse.setMessage("Invalid email or password. Please check your credentials and try again.");
+        } else {
+            restResponse.setError("Exception occurred");
+            restResponse.setMessage(exception.getMessage());
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(restResponse);
     }
@@ -90,5 +101,16 @@ public class GlobalException {
         restResponse.setError("Forbidden");
         restResponse.setMessage(exception.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(restResponse);
+    }
+
+    @ExceptionHandler(value = {
+            RateLimitException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleRateLimitException(Exception exception) {
+        RestResponse<Object> restResponse = new RestResponse<Object>();
+        restResponse.setStatusCode(HttpStatus.TOO_MANY_REQUESTS.value());
+        restResponse.setError("Too Many Requests");
+        restResponse.setMessage(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(restResponse);
     }
 }

@@ -31,9 +31,8 @@ public class OpenAPIConfig {
 
     private Contact createContact() {
         return new Contact()
-                .email("ads.hoidanit@gmail.com")
-                .name("Hỏi Dân IT")
-                .url("https://hoidanit.vn");
+                .email("htqhuy1762@gmail.com")
+                .name("huysirox");
     }
 
     private License createLicense() {
@@ -48,7 +47,6 @@ public class OpenAPIConfig {
                 .version("1.0")
                 .contact(createContact())
                 .description("This API exposes all endpoints (job hunter)")
-                .termsOfService("https://hoidanit.vn/donate")
                 .license(createLicense());
     }
 
@@ -58,7 +56,7 @@ public class OpenAPIConfig {
                 .info(createApiInfo())
                 .servers(List.of(
                         createServer("http://localhost:8080", "Server URL in Development environment"),
-                        createServer("https://hoidanit.vn", "Server URL in Production environment")))
+                        createServer("https://localhost:8080", "Server URL in Production environment")))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components().addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()));
     }

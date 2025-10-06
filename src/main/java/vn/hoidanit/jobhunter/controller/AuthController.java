@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import vn.hoidanit.jobhunter.config.RateLimit;
 import vn.hoidanit.jobhunter.domain.User;
 import vn.hoidanit.jobhunter.domain.request.ReqLoginDTO;
 import vn.hoidanit.jobhunter.domain.response.ResCreateUserDTO;
@@ -52,6 +53,7 @@ public class AuthController {
     }
 
     @PostMapping("/auth/login")
+    @RateLimit(limit = 5, duration = 60, message = "Too many login attempts. Please try again after 1 minute.")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 loginDTO.getUsername(), loginDTO.getPassword());
@@ -111,6 +113,7 @@ public class AuthController {
 
     @GetMapping("/auth/refresh")
     @ApiMessage("Get user by refresh token")
+    @RateLimit(limit = 10, duration = 60, message = "Too many refresh token requests. Please try again later.")
     public ResponseEntity<ResLoginDTO> getRefreshToken(@CookieValue (name = "refresh_token", defaultValue = "abc") String refresh_token) throws IdInvalidException {
         if (refresh_token.equals("abc")) {
             throw new IdInvalidException("You don't have refresh token");
@@ -198,6 +201,7 @@ public class AuthController {
 
     @PostMapping("/auth/register")
     @ApiMessage("Register")
+    @RateLimit(limit = 3, duration = 300, message = "Too many registration attempts. Please try again after 5 minutes.")
     public ResponseEntity<ResCreateUserDTO> register(@Valid @RequestBody User reqUser) throws IdInvalidException {
         boolean isEmailExist = this.userService.isEmailExist(reqUser.getEmail());
         if (isEmailExist) {

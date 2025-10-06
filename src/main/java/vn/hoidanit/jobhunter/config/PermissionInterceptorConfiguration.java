@@ -7,7 +7,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class PermissionInterceptorConfiguration implements WebMvcConfigurer { 
-    @Bean 
+    private final RateLimitInterceptor rateLimitInterceptor;
+
+    public PermissionInterceptorConfiguration(RateLimitInterceptor rateLimitInterceptor) {
+        this.rateLimitInterceptor = rateLimitInterceptor;
+    }
+
+    @Bean
     PermissionInterceptor getPermissionInterceptor() { 
         return new PermissionInterceptor(); 
     } 
@@ -20,7 +26,12 @@ public class PermissionInterceptorConfiguration implements WebMvcConfigurer {
                 "/api/v1/resumes/**",
                 "/api/v1/subscribers/**"
         }; 
-        registry.addInterceptor(getPermissionInterceptor()) 
+
+        // Add rate limit interceptor (applied to all endpoints)
+        registry.addInterceptor(rateLimitInterceptor);
+
+        // Add permission interceptor (excluded for whiteList)
+        registry.addInterceptor(getPermissionInterceptor())
                 .excludePathPatterns(whiteList); 
     } 
 }
