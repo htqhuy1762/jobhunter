@@ -34,13 +34,8 @@ public class RateLimitService {
             String currentCountStr = redisTemplate.opsForValue().get(redisKey);
             int currentCount = currentCountStr != null ? Integer.parseInt(currentCountStr) : 0;
 
-            System.out.println("🔍 [RateLimitService] Key: " + redisKey);
-            System.out.println("🔍 [RateLimitService] Current count: " + currentCount + "/" + limit);
-
             // Nếu đã vượt quá giới hạn
             if (currentCount >= limit) {
-                Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
-                System.out.println("🚫 [RateLimitService] Rate limit exceeded! TTL: " + ttl + " seconds");
                 return false;
             }
 
@@ -50,14 +45,11 @@ public class RateLimitService {
             // Nếu là request đầu tiên, set TTL
             if (newCount != null && newCount == 1) {
                 redisTemplate.expire(redisKey, Duration.ofSeconds(duration));
-                System.out.println("✅ [RateLimitService] First request, set TTL: " + duration + " seconds");
             }
 
-            System.out.println("✅ [RateLimitService] Request allowed. New count: " + newCount + "/" + limit);
             return true;
 
         } catch (Exception e) {
-            System.err.println("❌ [RateLimitService] Error: " + e.getMessage());
             // Nếu Redis lỗi, cho phép request (fail-open strategy)
             return true;
         }
@@ -103,10 +95,7 @@ public class RateLimitService {
     public void resetLimit(String key) {
         try {
             redisTemplate.delete(key);
-            System.out.println("🔄 [RateLimitService] Reset limit for key: " + key);
         } catch (Exception e) {
-            System.err.println("❌ [RateLimitService] Error resetting limit: " + e.getMessage());
         }
     }
 }
-

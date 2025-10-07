@@ -40,10 +40,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         String clientIp = getClientIP(request);
         String key = rateLimit.keyPrefix() + ":" + request.getRequestURI() + ":" + clientIp;
 
-        System.out.println("🔍 [RateLimitInterceptor] Checking rate limit for: " + clientIp);
-        System.out.println("🔍 [RateLimitInterceptor] URI: " + request.getRequestURI());
-        System.out.println("🔍 [RateLimitInterceptor] Limit: " + rateLimit.limit() + " requests per " + rateLimit.duration() + " seconds");
-
         // Kiểm tra rate limit
         boolean allowed = rateLimitService.allowRequest(key, rateLimit.limit(), rateLimit.duration());
 
@@ -53,7 +49,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             response.setHeader("X-RateLimit-Remaining", "0");
             response.setHeader("X-RateLimit-Reset", String.valueOf(rateLimitService.getTimeUntilReset(key)));
 
-            System.out.println("🚫 [RateLimitInterceptor] Rate limit exceeded for: " + clientIp);
             throw new RateLimitException(rateLimit.message());
         }
 
@@ -63,7 +58,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
         response.setHeader("X-RateLimit-Reset", String.valueOf(rateLimitService.getTimeUntilReset(key)));
 
-        System.out.println("✅ [RateLimitInterceptor] Request allowed. Remaining: " + remaining);
         return true;
     }
 
@@ -79,4 +73,3 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         return xfHeader.split(",")[0].trim();
     }
 }
-
