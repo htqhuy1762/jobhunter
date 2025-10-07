@@ -19,17 +19,17 @@ public class SubscriberService {
     private final SubscriberRepository subscriberRepository;
     private final SkillRepository skillRepository;
     private final JobRepository jobRepository;
-    private final EmailService emailService;
+    private final EmailProducerService emailProducerService;
 
     public SubscriberService(
             SubscriberRepository subscriberRepository,
             SkillRepository skillRepository,
             JobRepository jobRepository,
-            EmailService emailService) {
+            EmailProducerService emailProducerService) {
         this.subscriberRepository = subscriberRepository;
         this.skillRepository = skillRepository;
         this.jobRepository = jobRepository;
-        this.emailService = emailService;
+        this.emailProducerService = emailProducerService;
     }
     
     // @Scheduled(cron = "*/10 * * * * *")
@@ -77,6 +77,10 @@ public class SubscriberService {
         return res;
     }
 
+    /**
+     * Gửi email cho subscribers qua RabbitMQ queue
+     * Thay vì gửi email trực tiếp, messages được đẩy vào queue
+     */
     public void sendSubscribersEmailJobs() {
         List<Subscriber> listSubs = this.subscriberRepository.findAll();
         if (listSubs != null && listSubs.size() > 0) {
@@ -87,7 +91,9 @@ public class SubscriberService {
                     if (listJobs != null && listJobs.size() > 0) {
                         List<ResEmailJob> arr = listJobs.stream().map(
                                 job -> this.convertJobToSendEmail(job)).collect(Collectors.toList());
-                        this.emailService.sendEmailFromTemplateSync(
+
+                        // Gửi message vào RabbitMQ queue thay vì gửi email trực tiếp
+                        this.emailProducerService.sendEmailToQueue(
                                 sub.getEmail(),
                                 "Cơ hội việc làm hot đang chờ đón bạn, khám phá ngay",
                                 "job",

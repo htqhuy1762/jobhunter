@@ -1,42 +1,25 @@
 package vn.hoidanit.jobhunter.service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import org.springframework.mail.MailException;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import vn.hoidanit.jobhunter.domain.Job;
-import vn.hoidanit.jobhunter.repository.JobRepository;
+
 @Service
 public class EmailService {
-    private final MailSender mailSender;
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
-    private final JobRepository jobRepository;
-    
-    public EmailService(MailSender mailSender, JavaMailSender javaMailSender, SpringTemplateEngine templateEngine, JobRepository jobRepository) {
-        this.mailSender = mailSender;
+
+    public EmailService(JavaMailSender javaMailSender, SpringTemplateEngine templateEngine) {
         this.javaMailSender = javaMailSender;
         this.templateEngine = templateEngine;
-        this.jobRepository = jobRepository;
-    }
-
-    public void sendSimpleEmail() {
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo("huysirox365@gmail.com");
-        msg.setSubject("Test email from spring boot");
-        msg.setText("Hello world");
-        this.mailSender.send(msg);
     }
 
     public void sendEmailSync(String to, String subject, String content, boolean isMultipart, boolean isHtml) {
@@ -50,10 +33,14 @@ public class EmailService {
             this.javaMailSender.send(mimeMessage);
         } catch (MailException | MessagingException e) {
             System.out.println("ERROR SEND EMAIL: " + e);
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 
-    @Async
+    /**
+     * Gửi email từ template - được gọi bởi Consumer
+     * Method này sẽ được gọi từ RabbitMQ consumer
+     */
     public void sendEmailFromTemplateSync(String to, String subject, String templateName, String username, Object value) {
         Context context = new Context();
         context.setVariable("name", username);
