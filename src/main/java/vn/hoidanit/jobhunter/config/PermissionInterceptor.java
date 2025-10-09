@@ -2,13 +2,13 @@ package vn.hoidanit.jobhunter.config;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.Role;
 import vn.hoidanit.jobhunter.domain.User;
@@ -16,10 +16,10 @@ import vn.hoidanit.jobhunter.service.UserService;
 import vn.hoidanit.jobhunter.util.SecurityUtil;
 import vn.hoidanit.jobhunter.util.error.PermissionException;
 
+@RequiredArgsConstructor
 public class PermissionInterceptor implements HandlerInterceptor {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
     @Override
     @Transactional
@@ -37,10 +37,8 @@ public class PermissionInterceptor implements HandlerInterceptor {
         System.out.println(">>> requestURI= " + requestURI);
 
         // check permission
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() == true
-                ? SecurityUtil.getCurrentUserLogin().get()
-                : "";
-        if (email != null && !email.isEmpty()) {
+        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        if (!email.isEmpty()) {
             User user = this.userService.handleGetUserByUsername(email);
             if (user != null) {
                 Role role = user.getRole();
@@ -49,7 +47,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
                     boolean isAllow = permissions.stream().anyMatch(item -> item.getApiPath().equals(path)
                             && item.getMethod().equals(httpMethod));
 
-                    if (isAllow == false) {
+                    if (!isAllow) {
                         throw new PermissionException("Bạn không có quyền truy cập endpoint này.");
                     }
                 } else {
