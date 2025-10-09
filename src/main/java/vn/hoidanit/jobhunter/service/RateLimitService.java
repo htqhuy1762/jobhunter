@@ -6,17 +6,16 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Service xử lý Rate Limiting sử dụng Redis
  * Thuật toán: Fixed Window Counter
  */
 @Service
+@RequiredArgsConstructor
 public class RateLimitService {
     private final RedisTemplate<String, String> redisTemplate;
-
-    public RateLimitService(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
 
     /**
      * Kiểm tra xem request có bị rate limit không

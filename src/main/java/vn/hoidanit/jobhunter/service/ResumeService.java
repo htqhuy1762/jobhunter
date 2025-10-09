@@ -14,6 +14,7 @@ import com.turkraft.springfilter.converter.FilterSpecificationConverter;
 import com.turkraft.springfilter.parser.FilterParser;
 import com.turkraft.springfilter.parser.node.FilterNode;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Resume;
 import vn.hoidanit.jobhunter.domain.User;
@@ -27,22 +28,13 @@ import vn.hoidanit.jobhunter.repository.UserRepository;
 import vn.hoidanit.jobhunter.util.SecurityUtil;
 
 @Service
+@RequiredArgsConstructor
 public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final UserRepository userRepository;
     private final JobRepository jobRepository;
-
     private final FilterParser filterParser;
     private final FilterSpecificationConverter filterSpecificationConverter;
-
-    public ResumeService(ResumeRepository resumeRepository, UserRepository userRepository, JobRepository jobRepository,
-            FilterParser filterParser, FilterSpecificationConverter filterSpecificationConverter) {
-        this.resumeRepository = resumeRepository;
-        this.userRepository = userRepository;
-        this.jobRepository = jobRepository;
-        this.filterParser = filterParser;
-        this.filterSpecificationConverter = filterSpecificationConverter;
-    }
 
     public Optional<Resume> fetchById(long id) {
         return this.resumeRepository.findById(id);

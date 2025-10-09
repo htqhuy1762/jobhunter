@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Skill;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.service.SkillService;
@@ -24,15 +26,13 @@ import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class SkillController {
     private final SkillService skillService;
 
-    public SkillController(SkillService skillService) {
-        this.skillService = skillService;
-    }
-
     @PostMapping("/skills")
     @ApiMessage("Create a skill")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<Skill> create(@Valid @RequestBody Skill skill) throws IdInvalidException {
         if (skill.getName() != null && this.skillService.isNameExist(skill.getName())) {
             throw new IdInvalidException("Skill name = " + skill.getName() + " is already exist");
@@ -42,6 +42,7 @@ public class SkillController {
 
     @PutMapping("/skills")
     @ApiMessage("Update a skill")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<Skill> update(@Valid @RequestBody Skill skill) throws IdInvalidException {
         Skill currentSkill = this.skillService.fetchSkillById(skill.getId());
 
@@ -65,6 +66,7 @@ public class SkillController {
 
     @DeleteMapping("/skills/{id}")
     @ApiMessage("Delete a skill")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
         //Check id
         Skill currSkill = this.skillService.fetchSkillById(id);

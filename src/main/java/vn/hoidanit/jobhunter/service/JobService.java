@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Company;
 import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Skill;
@@ -20,16 +21,11 @@ import vn.hoidanit.jobhunter.repository.JobRepository;
 import vn.hoidanit.jobhunter.repository.SkillRepository;
 
 @Service
+@RequiredArgsConstructor
 public class JobService {
     private final JobRepository jobRepository;
     private final SkillRepository skillRepository;
     private final CompanyRepository companyRepository;
-
-    public JobService(JobRepository jobRepository, SkillRepository skillRepository, CompanyRepository companyRepository) {
-        this.jobRepository = jobRepository;
-        this.skillRepository = skillRepository;
-        this.companyRepository = companyRepository;
-    }
 
     public ResCreateJobDTO create(Job j) {
         // Check Skill

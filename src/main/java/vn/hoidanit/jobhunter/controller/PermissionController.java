@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.service.PermissionService;
@@ -24,15 +26,13 @@ import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class PermissionController {
     private final PermissionService permissionService;
 
-    public PermissionController(PermissionService permissionService) {
-        this.permissionService = permissionService;
-    }
-
     @PostMapping("/permissions")
     @ApiMessage("Create a permission")
+    @Secured({"SUPER_ADMIN"})  // Only SUPER_ADMIN can create permissions
     public ResponseEntity<Permission> create(@Valid @RequestBody Permission p) throws IdInvalidException {
         if (this.permissionService.isPermissionExist(p)) {
             throw new IdInvalidException("Permission is already exist");
@@ -43,6 +43,7 @@ public class PermissionController {
 
     @PutMapping("/permissions")
     @ApiMessage("Update a permission")
+    @Secured({"SUPER_ADMIN"})  // Only SUPER_ADMIN can update permissions
     public ResponseEntity<Permission> update(@Valid @RequestBody Permission p) throws IdInvalidException {
         // check exist by id
         if (this.permissionService.fetchById(p.getId()) == null) {
@@ -63,6 +64,7 @@ public class PermissionController {
 
     @DeleteMapping("/permissions/{id}")
     @ApiMessage("Delete a permission")
+    @Secured({"SUPER_ADMIN"})  // Only SUPER_ADMIN can delete permissions
     public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
         if (this.permissionService.fetchById(id) == null) {
             throw new IdInvalidException("Permission with id = " + id + " does not exist.");
@@ -74,6 +76,7 @@ public class PermissionController {
 
     @GetMapping("/permissions")
     @ApiMessage("Fetch all permissions")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})  // Admin can view permissions
     public ResponseEntity<ResultPaginationDTO> getPermissions(@Filter Specification<Permission> spec, Pageable pageable) {
         return ResponseEntity.ok().body(this.permissionService.getPermissions(spec, pageable));
     }

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Skill;
 import vn.hoidanit.jobhunter.domain.Subscriber;
@@ -15,23 +16,13 @@ import vn.hoidanit.jobhunter.repository.SkillRepository;
 import vn.hoidanit.jobhunter.repository.SubscriberRepository;
 
 @Service
+@RequiredArgsConstructor
 public class SubscriberService {
     private final SubscriberRepository subscriberRepository;
     private final SkillRepository skillRepository;
     private final JobRepository jobRepository;
     private final EmailProducerService emailProducerService;
 
-    public SubscriberService(
-            SubscriberRepository subscriberRepository,
-            SkillRepository skillRepository,
-            JobRepository jobRepository,
-            EmailProducerService emailProducerService) {
-        this.subscriberRepository = subscriberRepository;
-        this.skillRepository = skillRepository;
-        this.jobRepository = jobRepository;
-        this.emailProducerService = emailProducerService;
-    }
-    
     // @Scheduled(cron = "*/10 * * * * *")
     // public void testCron() {
     //     System.out.println("test cron");

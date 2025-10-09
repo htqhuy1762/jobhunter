@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.Role;
 import vn.hoidanit.jobhunter.domain.User;
@@ -16,20 +17,12 @@ import vn.hoidanit.jobhunter.repository.UserRepository;
 import vn.hoidanit.jobhunter.util.constant.GenderEnum;
 
 @Service
+@RequiredArgsConstructor
 public class DatabaseInitializer implements CommandLineRunner {
     private final PermissionRepository permissionRepository;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public DatabaseInitializer(PermissionRepository permissionRepository, RoleRepository roleRepository,
-            UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.permissionRepository = permissionRepository;
-        this.roleRepository = roleRepository;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
 
     @Override
     public void run(String... args) throws Exception {
@@ -89,38 +82,91 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
 
         if (countRoles == 0) {
+            System.out.println(">>> Creating default roles...");
             List<Permission> allPermissions = this.permissionRepository.findAll();
 
-            Role adminRole = new Role();
-            adminRole.setName("SUPER_ADMIN");
-            adminRole.setDescription("Admin thì full permissions");
-            adminRole.setActive(true);
-            adminRole.setPermissions(allPermissions);
+            // 1. SUPER_ADMIN - Full permissions
+            Role superAdminRole = new Role();
+            superAdminRole.setName("SUPER_ADMIN");
+            superAdminRole.setDescription("Super Admin - Full system access, can manage everything");
+            superAdminRole.setActive(true);
+            superAdminRole.setPermissions(allPermissions);
+            this.roleRepository.save(superAdminRole);
+            System.out.println(">>> Created role: SUPER_ADMIN");
 
+            // 2. ROLE_ADMIN - Can manage users, companies, jobs, all resumes
+            Role adminRole = new Role();
+            adminRole.setName("ROLE_ADMIN");
+            adminRole.setDescription("Admin - Can manage users, companies, jobs, and all resumes");
+            adminRole.setActive(true);
+            // Admin có hầu hết permissions trừ một số permissions nhạy cảm về roles/permissions
+            List<Permission> adminPermissions = allPermissions.stream()
+                .filter(p -> !p.getModule().equals("PERMISSIONS")) // Admin không quản lý permissions
+                .toList();
+            adminRole.setPermissions(adminPermissions);
             this.roleRepository.save(adminRole);
+            System.out.println(">>> Created role: ROLE_ADMIN");
+
+            // 3. ROLE_HR - Can manage jobs and resumes for their company
+            Role hrRole = new Role();
+            hrRole.setName("ROLE_HR");
+            hrRole.setDescription("HR - Can manage jobs and resumes for their company");
+            hrRole.setActive(true);
+            // HR chỉ có quyền với JOBS và RESUMES
+            List<Permission> hrPermissions = allPermissions.stream()
+                .filter(p -> p.getModule().equals("JOBS") || p.getModule().equals("RESUMES"))
+                .toList();
+            hrRole.setPermissions(hrPermissions);
+            this.roleRepository.save(hrRole);
+            System.out.println(">>> Created role: ROLE_HR");
+
+            // 4. ROLE_USER - Normal user, can view jobs and manage their own resumes
+            Role userRole = new Role();
+            userRole.setName("ROLE_USER");
+            userRole.setDescription("Normal User - Can view jobs and manage their own resumes");
+            userRole.setActive(true);
+            // User chỉ có quyền xem jobs và quản lý CV của mình
+            List<Permission> userPermissions = allPermissions.stream()
+                .filter(p ->
+                    (p.getModule().equals("JOBS") && p.getMethod().equals("GET")) ||
+                    (p.getModule().equals("RESUMES") &&
+                        (p.getMethod().equals("POST") || p.getMethod().equals("GET")))
+                )
+                .toList();
+            userRole.setPermissions(userPermissions);
+            this.roleRepository.save(userRole);
+            System.out.println(">>> Created role: ROLE_USER");
         }
 
         if (countUsers == 0) {
+            System.out.println(">>> Creating default admin user...");
             User adminUser = new User();
             adminUser.setEmail("admin@gmail.com");
-            adminUser.setAddress("hn");
+            adminUser.setAddress("Hanoi, Vietnam");
             adminUser.setAge(25);
             adminUser.setGender(GenderEnum.MALE);
-            adminUser.setName("I'm super admin");
+            adminUser.setName("Super Administrator");
             adminUser.setPassword(this.passwordEncoder.encode("123456"));
 
-            Role adminRole = this.roleRepository.findByName("SUPER_ADMIN");
-            if (adminRole != null) {
-                adminUser.setRole(adminRole);
+            Role superAdminRole = this.roleRepository.findByName("SUPER_ADMIN");
+            if (superAdminRole != null) {
+                adminUser.setRole(superAdminRole);
             }
 
             this.userRepository.save(adminUser);
+            System.out.println(">>> Created default user: admin@gmail.com / 123456");
+            System.out.println(">>> ⚠️  REMEMBER TO CHANGE DEFAULT PASSWORD!");
         }
 
         if (countPermissions > 0 && countRoles > 0 && countUsers > 0) {
             System.out.println(">>> SKIP INIT DATABASE ~ ALREADY HAVE DATA...");
-        } else
+        } else {
             System.out.println(">>> END INIT DATABASE");
+            System.out.println(">>> Database initialized successfully with:");
+            System.out.println("    - Permissions: " + this.permissionRepository.count());
+            System.out.println("    - Roles: " + this.roleRepository.count() + " (SUPER_ADMIN, ROLE_ADMIN, ROLE_HR, ROLE_USER)");
+            System.out.println("    - Users: " + this.userRepository.count());
+        }
     }
-    
+
 }

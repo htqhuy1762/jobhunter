@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.response.file.ResUploadFileDTO;
 import vn.hoidanit.jobhunter.service.StorageService;
 import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
@@ -22,16 +23,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class FileController {
 
     private final StorageService storageService;
 
-    public FileController(StorageService storageService) {
-        this.storageService = storageService;
-    }
-
     @PostMapping("/files")
     @ApiMessage("Upload single file")
+    // Requires authentication - user must be logged in to upload files
     public ResponseEntity<ResUploadFileDTO> uploadFile(
             @RequestParam(name = "file", required = false) MultipartFile file,
             @RequestParam("folder") String folder) throws Exception {
@@ -46,6 +45,7 @@ public class FileController {
 
     @GetMapping("/files")
     @ApiMessage("Download a file")
+    // Requires authentication - user must be logged in to download files
     public ResponseEntity<Resource> download(
             @RequestParam(name = "fileName", required = false) String fileName,
             @RequestParam(name = "folder", required = false) String folder) throws Exception {

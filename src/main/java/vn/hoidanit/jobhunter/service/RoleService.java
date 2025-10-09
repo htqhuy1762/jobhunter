@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.Role;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
@@ -16,16 +17,10 @@ import vn.hoidanit.jobhunter.repository.PermissionRepository;
 import vn.hoidanit.jobhunter.repository.RoleRepository;
 
 @Service
+@RequiredArgsConstructor
 public class RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
-
-    public RoleService(
-            RoleRepository roleRepository,
-            PermissionRepository permissionRepository) {
-        this.roleRepository = roleRepository;
-        this.permissionRepository = permissionRepository;
-    }
 
     public boolean existByName(String name) {
         return this.roleRepository.existsByName(name);

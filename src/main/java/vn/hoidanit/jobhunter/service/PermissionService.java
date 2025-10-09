@@ -2,24 +2,21 @@ package vn.hoidanit.jobhunter.service;
 
 import java.util.Optional;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.repository.PermissionRepository;
 
 @Service
+@RequiredArgsConstructor
 public class PermissionService {
     private final PermissionRepository permissionRepository;
 
-    public PermissionService(PermissionRepository permissionRepository) {
-        this.permissionRepository = permissionRepository;
-    }
-    
     public boolean isPermissionExist(Permission p) {
         return permissionRepository.existsByModuleAndApiPathAndMethod(p.getModule(), p.getApiPath(), p.getMethod());
     }

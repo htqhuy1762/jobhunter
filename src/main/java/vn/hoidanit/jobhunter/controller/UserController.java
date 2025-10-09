@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.User;
 import vn.hoidanit.jobhunter.domain.response.ResCreateUserDTO;
 import vn.hoidanit.jobhunter.domain.response.ResUpdateUserDTO;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,17 +31,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserService userService, PasswordEncoder passwordEncoder) {
-        this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     @GetMapping("/users/{id}")
     @ApiMessage("Get user by id")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<ResUserDTO> getUserById(@PathVariable("id") long id) throws IdInvalidException {
         User user = this.userService.handleGetUserById(id);
         if (user == null) {
@@ -51,6 +50,7 @@ public class UserController {
 
     @GetMapping("/users")
     @ApiMessage("Get all users")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<ResultPaginationDTO> getAllUser(@Filter Specification<User> spec, Pageable pageable) {
         
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.handleGetAllUser(spec, pageable));
@@ -58,6 +58,7 @@ public class UserController {
 
     @PostMapping("/users")
     @ApiMessage("Create new user")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<ResCreateUserDTO> createNewUser(@Valid @RequestBody User postManUser) throws IdInvalidException {
 
         boolean isEmailExist = this.userService.isEmailExist(postManUser.getEmail());
@@ -73,6 +74,7 @@ public class UserController {
 
     @PutMapping("/users")
     @ApiMessage("Update a user")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<ResUpdateUserDTO> updateUser(@RequestBody User postManUser) throws IdInvalidException {
         User updatedUser = this.userService.handleUpdateUser(postManUser);
         if (updatedUser == null) {
@@ -84,6 +86,7 @@ public class UserController {
 
     @DeleteMapping("/users/{id}")
     @ApiMessage("Delete user by id")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<Void> deleteUser(@PathVariable("id") long id) throws IdInvalidException {
         User user = this.userService.handleGetUserById(id);
         if (user == null) {

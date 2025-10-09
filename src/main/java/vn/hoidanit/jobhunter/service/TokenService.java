@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-@Service
-public class TokenService {
+import lombok.RequiredArgsConstructor;
 
+@Service
+@RequiredArgsConstructor
+public class TokenService {
     private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
@@ -20,10 +22,6 @@ public class TokenService {
     // Prefix cho key trong Redis để dễ quản lý
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
     private static final String BLACKLIST_TOKEN_PREFIX = "blacklist_token:";
-
-    public TokenService(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
 
     /**
      * Lưu refresh token vào Redis với TTL (Time To Live)

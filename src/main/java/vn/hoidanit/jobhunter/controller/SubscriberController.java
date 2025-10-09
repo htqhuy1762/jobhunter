@@ -2,6 +2,7 @@ package vn.hoidanit.jobhunter.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Subscriber;
 import vn.hoidanit.jobhunter.service.SubscriberService;
 import vn.hoidanit.jobhunter.util.SecurityUtil;
@@ -17,15 +19,13 @@ import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class SubscriberController {
     private final SubscriberService subscriberService;
 
-    public SubscriberController(SubscriberService subscriberService) {
-        this.subscriberService = subscriberService;
-    }
-
     @PostMapping("/subscribers")
     @ApiMessage("Create a subscriber")
+    // Public - anyone can subscribe to newsletter
     public ResponseEntity<Subscriber> create(@Valid @RequestBody Subscriber subscriber) throws IdInvalidException{
         // check email
         boolean isExist = this.subscriberService.isExistsByEmail(subscriber.getEmail());
@@ -38,6 +38,7 @@ public class SubscriberController {
 
     @PutMapping("/subscribers")
     @ApiMessage("Update a subscriber")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})  // Only admin can update subscribers
     public ResponseEntity<Subscriber> update(@RequestBody Subscriber subscriber) throws IdInvalidException {
         // check id
         Subscriber subscriberDB = this.subscriberService.findById(subscriber.getId());
@@ -51,6 +52,7 @@ public class SubscriberController {
 
     @PostMapping("/subscribers/skills")
     @ApiMessage("Get list subscriber by skills")
+    // Requires authentication - user must be logged in
     public ResponseEntity<Subscriber> getSubscribersSkill() throws IdInvalidException {
         String email = SecurityUtil.getCurrentUserLogin().isPresent() == true
                 ? SecurityUtil.getCurrentUserLogin().get()

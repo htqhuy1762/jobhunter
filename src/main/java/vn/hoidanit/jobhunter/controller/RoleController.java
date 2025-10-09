@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.service.RoleService;
 import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
@@ -24,15 +26,13 @@ import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class RoleController {
     private final RoleService roleService;
 
-    public RoleController(RoleService roleService) {
-        this.roleService = roleService;
-    }
-
     @PostMapping("/roles")
     @ApiMessage("Create a role")
+    @Secured({"SUPER_ADMIN"})  // Only SUPER_ADMIN can create roles
     public ResponseEntity<Role> create(@Valid @RequestBody Role r) throws IdInvalidException {
         // check name
         if (this.roleService.existByName(r.getName())) {
@@ -44,6 +44,7 @@ public class RoleController {
 
     @PutMapping("/roles")
     @ApiMessage("Update a role")
+    @Secured({"SUPER_ADMIN"})  // Only SUPER_ADMIN can update roles
     public ResponseEntity<Role> update(@Valid @RequestBody Role r) throws IdInvalidException {
         // check exist by id
         if (this.roleService.fetchById(r.getId()) == null) {
@@ -62,6 +63,7 @@ public class RoleController {
 
     @DeleteMapping("/roles/{id}")
     @ApiMessage("Delete a role")
+    @Secured({"SUPER_ADMIN"})  // Only SUPER_ADMIN can delete roles
     public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
         // check id
         if (this.roleService.fetchById(id) == null) {
@@ -73,13 +75,15 @@ public class RoleController {
 
     @GetMapping("/roles")
     @ApiMessage("Get all roles")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})  // Admin can view roles
     public ResponseEntity<ResultPaginationDTO> getAllRoles(@Filter Specification<Role> spec, Pageable pageable) {
         return ResponseEntity.ok().body(this.roleService.getRoles(spec, pageable));
     }
 
     @GetMapping("/roles/{id}")
     @ApiMessage("Get a role by id")
-    public ResponseEntity<Role> getRoleById(@PathVariable("id") long id) throws IdInvalidException {
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})  // Admin can view role details
+    public ResponseEntity<Role> getById(@PathVariable("id") long id) throws IdInvalidException {
         Role r = this.roleService.fetchById(id);
         if (r == null) {
             throw new IdInvalidException("Role with id = " + id + " does not exist.");

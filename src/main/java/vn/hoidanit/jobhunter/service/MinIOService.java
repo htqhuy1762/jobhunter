@@ -16,14 +16,15 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.util.error.StorageException;
 
 @Service
 @Slf4j
 @ConditionalOnProperty(name = "storage.mode", havingValue = "minio")
+@RequiredArgsConstructor
 public class MinIOService implements StorageService {
-
     private final MinioClient minioClient;
 
     @Value("${minio.bucket-name}")
@@ -32,9 +33,6 @@ public class MinIOService implements StorageService {
     @Value("${minio.endpoint}")
     private String endpoint;
 
-    public MinIOService(MinioClient minioClient) {
-        this.minioClient = minioClient;
-    }
 
     /**
      * Kiểm tra và tạo bucket nếu chưa tồn tại

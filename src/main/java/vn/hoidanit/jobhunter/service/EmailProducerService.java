@@ -3,19 +3,17 @@ package vn.hoidanit.jobhunter.service;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.config.RabbitMQConfig;
 import vn.hoidanit.jobhunter.domain.dto.EmailDTO;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class EmailProducerService {
-
     private final RabbitTemplate rabbitTemplate;
 
-    public EmailProducerService(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
-    }
 
     /**
      * Gửi email message vào RabbitMQ queue

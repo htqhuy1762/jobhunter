@@ -25,15 +25,13 @@ import org.springframework.stereotype.Service;
 
 import com.nimbusds.jose.util.Base64;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.response.ResLoginDTO;
 
 @Service
+@RequiredArgsConstructor
 public class SecurityUtil {
     private final JwtEncoder jwtEncoder;
-
-    public SecurityUtil(JwtEncoder jwtEncoder) {
-        this.jwtEncoder = jwtEncoder;
-    }
 
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
 
@@ -55,9 +53,14 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
+        // SECURITY FIX: Use actual role from user instead of hardcoded permissions
         List<String> listAuthority = new ArrayList<String>();
-        listAuthority.add("ROLE_USER_CREATE");
-        listAuthority.add("ROLE_USER_UPDATE");
+        if (dto.getUser() != null && dto.getUser().getRole() != null) {
+            listAuthority.add(dto.getUser().getRole().getName());
+        } else {
+            // Default role if none specified
+            listAuthority.add("ROLE_USER");
+        }
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)

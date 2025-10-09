@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,7 @@ import com.turkraft.springfilter.builder.FilterBuilder;
 import com.turkraft.springfilter.converter.FilterSpecificationConverter;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Company;
 import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Resume;
@@ -38,23 +40,12 @@ import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class ResumeController {
     private final ResumeService resumeService;
     private final UserService userService;
-
     private final FilterBuilder filterBuilder;
     private final FilterSpecificationConverter filterSpecificationConverter;
-
-    public ResumeController(
-            ResumeService resumeService,
-            UserService userService,
-            FilterBuilder filterBuilder,
-            FilterSpecificationConverter filterSpecificationConverter) {
-        this.resumeService = resumeService;
-        this.userService = userService;
-        this.filterBuilder = filterBuilder;
-        this.filterSpecificationConverter = filterSpecificationConverter;
-    }
 
     @PostMapping("/resumes")
     @ApiMessage("Create a resume")
@@ -64,17 +55,48 @@ public class ResumeController {
         if(!isIdExist) {
             throw new IdInvalidException("User or Job id is invalid");
         }
+
+        // SECURITY: Ensure user can only create resume for themselves
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().orElse("");
+        User currentUser = this.userService.handleGetUserByUsername(currentUserEmail);
+        if (currentUser != null && resume.getUser() != null) {
+            if (resume.getUser().getId() != currentUser.getId()) {
+                throw new IdInvalidException("You can only create resume for yourself");
+            }
+        }
+
         // Create resume
         return ResponseEntity.status(HttpStatus.CREATED).body(this.resumeService.create(resume));
     }
 
     @PutMapping("/resumes")
     @ApiMessage("Update a resume")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN", "ROLE_HR"})
     public ResponseEntity<ResUpdateResumeDTO> update(@RequestBody Resume resume) throws IdInvalidException {
         // check id exists
         Optional<Resume> resumeOptional = this.resumeService.fetchById(resume.getId());
         if(resumeOptional.isEmpty()) {
             throw new IdInvalidException("Resume id is not exist");
+        }
+
+        // SECURITY: HR can only update resumes for their company's jobs
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().orElse("");
+        User currentUser = this.userService.handleGetUserByUsername(currentUserEmail);
+        Resume existingResume = resumeOptional.get();
+
+        if (currentUser != null && currentUser.getRole() != null) {
+            String roleName = currentUser.getRole().getName();
+            // Allow SUPER_ADMIN and ROLE_ADMIN full access
+            if (!"SUPER_ADMIN".equals(roleName) && !"ROLE_ADMIN".equals(roleName)) {
+                // ROLE_HR: can only update resumes for their company's jobs
+                if ("ROLE_HR".equals(roleName)) {
+                    if (currentUser.getCompany() == null || existingResume.getJob() == null ||
+                        existingResume.getJob().getCompany() == null ||
+                        currentUser.getCompany().getId() != existingResume.getJob().getCompany().getId()) {
+                        throw new IdInvalidException("You can only update resumes for your company's jobs");
+                    }
+                }
+            }
         }
 
         Resume reqResume = resumeOptional.get();
@@ -90,6 +112,24 @@ public class ResumeController {
         if(resumeOptional.isEmpty()) {
             throw new IdInvalidException("Resume id is not exist");
         }
+
+        // SECURITY: User can only delete their own resume, or Admin can delete any
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().orElse("");
+        User currentUser = this.userService.handleGetUserByUsername(currentUserEmail);
+        Resume existingResume = resumeOptional.get();
+
+        if (currentUser != null && currentUser.getRole() != null) {
+            String roleName = currentUser.getRole().getName();
+            // Allow SUPER_ADMIN and ROLE_ADMIN to delete any resume
+            if (!"SUPER_ADMIN".equals(roleName) && !"ROLE_ADMIN".equals(roleName)) {
+                // Regular users can only delete their own resumes
+                if (existingResume.getUser() == null ||
+                    existingResume.getUser().getId() != currentUser.getId()) {
+                    throw new IdInvalidException("You can only delete your own resume");
+                }
+            }
+        }
+
         this.resumeService.delete(id);
         return ResponseEntity.ok().body(null);
     }
@@ -101,11 +141,40 @@ public class ResumeController {
         if(resumeOptional.isEmpty()) {
             throw new IdInvalidException("Resume id is not exist");
         }
+
+        // SECURITY: User can only view their own resume, HR can view resumes for their company, Admin can view all
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().orElse("");
+        User currentUser = this.userService.handleGetUserByUsername(currentUserEmail);
+        Resume existingResume = resumeOptional.get();
+
+        if (currentUser != null && currentUser.getRole() != null) {
+            String roleName = currentUser.getRole().getName();
+
+            // SUPER_ADMIN and ROLE_ADMIN can view all resumes
+            if ("SUPER_ADMIN".equals(roleName) || "ROLE_ADMIN".equals(roleName)) {
+                // Full access - do nothing
+            } else if ("ROLE_USER".equals(roleName)) {
+                // User can only view their own resume
+                if (existingResume.getUser() == null ||
+                    existingResume.getUser().getId() != currentUser.getId()) {
+                    throw new IdInvalidException("You can only view your own resume");
+                }
+            } else if ("ROLE_HR".equals(roleName)) {
+                // HR can only view resumes for their company's jobs
+                if (currentUser.getCompany() == null || existingResume.getJob() == null ||
+                    existingResume.getJob().getCompany() == null ||
+                    currentUser.getCompany().getId() != existingResume.getJob().getCompany().getId()) {
+                    throw new IdInvalidException("You can only view resumes for your company's jobs");
+                }
+            }
+        }
+
         return ResponseEntity.ok().body(this.resumeService.getResume(resumeOptional.get()));
     }
 
     @GetMapping("/resumes")
     @ApiMessage("Fetch all resume with paginate")
+    @Secured({"SUPER_ADMIN", "ROLE_ADMIN", "ROLE_HR"})
     public ResponseEntity<ResultPaginationDTO> fetchAll(
             @Filter Specification<Resume> spec,
             Pageable pageable) {

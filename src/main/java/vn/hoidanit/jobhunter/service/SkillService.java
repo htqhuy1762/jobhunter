@@ -7,17 +7,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.domain.Skill;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.repository.SkillRepository;
 
 @Service
+@RequiredArgsConstructor
 public class SkillService {
     private final SkillRepository skillRepository;
-
-    public SkillService(SkillRepository skillRepository) {
-        this.skillRepository = skillRepository;
-    }
 
     public boolean isNameExist(String name) {
         return this.skillRepository.existsByName(name);

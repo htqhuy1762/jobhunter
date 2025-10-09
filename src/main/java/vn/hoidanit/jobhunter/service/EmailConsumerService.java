@@ -4,22 +4,18 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.config.RabbitMQConfig;
 import vn.hoidanit.jobhunter.domain.dto.EmailDTO;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class EmailConsumerService {
-
     private final EmailService emailService;
     private final EmailProducerService emailProducerService;
     private static final int MAX_RETRY_COUNT = 3;
-
-    public EmailConsumerService(EmailService emailService, EmailProducerService emailProducerService) {
-        this.emailService = emailService;
-        this.emailProducerService = emailProducerService;
-    }
 
     /**
      * Consumer chính - xử lý email từ queue
