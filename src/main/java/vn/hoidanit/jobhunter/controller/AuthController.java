@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobhunter.config.RateLimit;
 import vn.hoidanit.jobhunter.domain.User;
 import vn.hoidanit.jobhunter.domain.request.ReqLoginDTO;
+import vn.hoidanit.jobhunter.domain.request.ReqChangePasswordDTO;
 import vn.hoidanit.jobhunter.domain.response.ResCreateUserDTO;
 import vn.hoidanit.jobhunter.domain.response.ResLoginDTO;
 import vn.hoidanit.jobhunter.service.UserService;
@@ -206,5 +207,31 @@ public class AuthController {
         reqUser.setPassword(hashPassword);
         User user = this.userService.handleCreateUser(reqUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToResCreateUserDTO(user));
+    }
+
+    @PostMapping("/auth/change-password")
+    @ApiMessage("Change password")
+    @RateLimit(limit = 5, duration = 300, message = "Too many password change attempts. Please try again after 5 minutes.")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ReqChangePasswordDTO reqChangePasswordDTO) throws IdInvalidException {
+        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
+
+        if (email.equals("")) {
+            throw new IdInvalidException("User not authenticated");
+        }
+
+        // Kiểm tra mật khẩu mới và mật khẩu xác nhận có khớp không
+        if (!reqChangePasswordDTO.getNewPassword().equals(reqChangePasswordDTO.getConfirmPassword())) {
+            throw new IdInvalidException("New password and confirm password do not match");
+        }
+
+        // Kiểm tra mật khẩu mới có khác mật khẩu cũ không
+        if (reqChangePasswordDTO.getOldPassword().equals(reqChangePasswordDTO.getNewPassword())) {
+            throw new IdInvalidException("New password must be different from old password");
+        }
+
+        // Thực hiện đổi mật khẩu
+        this.userService.handleChangePassword(email, reqChangePasswordDTO.getOldPassword(), reqChangePasswordDTO.getNewPassword());
+
+        return ResponseEntity.ok().body(null);
     }
 }

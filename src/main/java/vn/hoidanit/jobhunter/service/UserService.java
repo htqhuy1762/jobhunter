@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import vn.hoidanit.jobhunter.domain.response.ResUpdateUserDTO;
 import vn.hoidanit.jobhunter.domain.response.ResUserDTO;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.repository.UserRepository;
+import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final CompanyService companyService;
     private final RoleService roleService;
+    private final PasswordEncoder passwordEncoder;
 
     public User handleCreateUser(User user) {
         // check company
@@ -172,5 +175,21 @@ public class UserService {
         res.setGender(user.getGender());
         res.setAddress(user.getAddress());
         return res;
+    }
+
+    public void handleChangePassword(String email, String oldPassword, String newPassword) throws IdInvalidException {
+        User user = this.userRepository.findByEmail(email);
+        if (user == null) {
+            throw new IdInvalidException("User not found");
+        }
+
+        // Kiểm tra mật khẩu cũ có đúng không
+        if (!this.passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IdInvalidException("Old password is incorrect");
+        }
+
+        // Mã hóa và lưu mật khẩu mới
+        user.setPassword(this.passwordEncoder.encode(newPassword));
+        this.userRepository.save(user);
     }
 }

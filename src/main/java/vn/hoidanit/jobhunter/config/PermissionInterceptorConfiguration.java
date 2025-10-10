@@ -5,18 +5,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import vn.hoidanit.jobhunter.service.UserService;
+
 @Configuration
 public class PermissionInterceptorConfiguration implements WebMvcConfigurer { 
     private final RateLimitInterceptor rateLimitInterceptor;
+    private final UserService userService;
 
-    public PermissionInterceptorConfiguration(RateLimitInterceptor rateLimitInterceptor) {
+    public PermissionInterceptorConfiguration(RateLimitInterceptor rateLimitInterceptor, UserService userService) {
         this.rateLimitInterceptor = rateLimitInterceptor;
+        this.userService = userService;
     }
 
     @Bean
     PermissionInterceptor getPermissionInterceptor() { 
-        return new PermissionInterceptor(); 
-    } 
+        return new PermissionInterceptor(userService);
+    }
  
     @Override 
     public void addInterceptors(InterceptorRegistry registry) { 
