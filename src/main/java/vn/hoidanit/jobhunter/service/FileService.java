@@ -20,10 +20,12 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.util.error.StorageException;
 
 @Service
 @ConditionalOnProperty(name = "storage.mode", havingValue = "local", matchIfMissing = true)
+@Slf4j
 public class FileService implements StorageService {
     @Value("${hoidanit.upload-file.base-uri}")
     private String baseURI;
@@ -35,12 +37,12 @@ public class FileService implements StorageService {
         if (!tmpDir.isDirectory()) {
             try {
                 Files.createDirectory(tmpDir.toPath());
-                System.out.println(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = " + folder);
+                log.info(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = {}", folder);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(">>> Error creating directory: {}", e.getMessage());
             }
         } else {
-            System.out.println(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS");
+            log.info(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS: {}", folder);
         }
     }
 

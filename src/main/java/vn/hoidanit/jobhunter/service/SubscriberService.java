@@ -23,11 +23,6 @@ public class SubscriberService {
     private final JobRepository jobRepository;
     private final EmailProducerService emailProducerService;
 
-    // @Scheduled(cron = "*/10 * * * * *")
-    // public void testCron() {
-    //     System.out.println("test cron");
-    // }
-
     public boolean isExistsByEmail(String email) {
         return this.subscriberRepository.existsByEmail(email);
     }

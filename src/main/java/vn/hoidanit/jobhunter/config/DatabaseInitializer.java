@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.Role;
 import vn.hoidanit.jobhunter.domain.User;
@@ -18,6 +19,7 @@ import vn.hoidanit.jobhunter.util.constant.GenderEnum;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DatabaseInitializer implements CommandLineRunner {
     private final PermissionRepository permissionRepository;
     private final RoleRepository roleRepository;
@@ -26,7 +28,7 @@ public class DatabaseInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println(">>> START INIT DATABASE");
+        log.info(">>> START INIT DATABASE");
         long countPermissions = this.permissionRepository.count();
         long countRoles = this.roleRepository.count();
         long countUsers = this.userRepository.count();
@@ -82,7 +84,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
 
         if (countRoles == 0) {
-            System.out.println(">>> Creating default roles...");
+            log.info(">>> Creating default roles...");
             List<Permission> allPermissions = this.permissionRepository.findAll();
 
             // 1. SUPER_ADMIN - Full permissions
@@ -92,7 +94,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             superAdminRole.setActive(true);
             superAdminRole.setPermissions(allPermissions);
             this.roleRepository.save(superAdminRole);
-            System.out.println(">>> Created role: SUPER_ADMIN");
+            log.info(">>> Created role: SUPER_ADMIN");
 
             // 2. ROLE_ADMIN - Can manage users, companies, jobs, all resumes
             Role adminRole = new Role();
@@ -105,7 +107,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 .toList();
             adminRole.setPermissions(adminPermissions);
             this.roleRepository.save(adminRole);
-            System.out.println(">>> Created role: ROLE_ADMIN");
+            log.info(">>> Created role: ROLE_ADMIN");
 
             // 3. ROLE_HR - Can manage jobs and resumes for their company
             Role hrRole = new Role();
@@ -118,7 +120,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 .toList();
             hrRole.setPermissions(hrPermissions);
             this.roleRepository.save(hrRole);
-            System.out.println(">>> Created role: ROLE_HR");
+            log.info(">>> Created role: ROLE_HR");
 
             // 4. ROLE_USER - Normal user, can view jobs and manage their own resumes
             Role userRole = new Role();
@@ -135,11 +137,11 @@ public class DatabaseInitializer implements CommandLineRunner {
                 .toList();
             userRole.setPermissions(userPermissions);
             this.roleRepository.save(userRole);
-            System.out.println(">>> Created role: ROLE_USER");
+            log.info(">>> Created role: ROLE_USER");
         }
 
         if (countUsers == 0) {
-            System.out.println(">>> Creating default admin user...");
+            log.info(">>> Creating default admin user...");
             User adminUser = new User();
             adminUser.setEmail("admin@gmail.com");
             adminUser.setAddress("Hanoi, Vietnam");
@@ -154,18 +156,18 @@ public class DatabaseInitializer implements CommandLineRunner {
             }
 
             this.userRepository.save(adminUser);
-            System.out.println(">>> Created default user: admin@gmail.com / 123456");
-            System.out.println(">>> ⚠️  REMEMBER TO CHANGE DEFAULT PASSWORD!");
+            log.info(">>> Created default user: admin@gmail.com / 123456");
+            log.warn(">>> ⚠️  REMEMBER TO CHANGE DEFAULT PASSWORD!");
         }
 
         if (countPermissions > 0 && countRoles > 0 && countUsers > 0) {
-            System.out.println(">>> SKIP INIT DATABASE ~ ALREADY HAVE DATA...");
+            log.info(">>> SKIP INIT DATABASE ~ ALREADY HAVE DATA...");
         } else {
-            System.out.println(">>> END INIT DATABASE");
-            System.out.println(">>> Database initialized successfully with:");
-            System.out.println("    - Permissions: " + this.permissionRepository.count());
-            System.out.println("    - Roles: " + this.roleRepository.count() + " (SUPER_ADMIN, ROLE_ADMIN, ROLE_HR, ROLE_USER)");
-            System.out.println("    - Users: " + this.userRepository.count());
+            log.info(">>> END INIT DATABASE");
+            log.info(">>> Database initialized successfully with:");
+            log.info("    - Permissions: {}", this.permissionRepository.count());
+            log.info("    - Roles: {} (SUPER_ADMIN, ROLE_ADMIN, ROLE_HR, ROLE_USER)", this.roleRepository.count());
+            log.info("    - Users: {}", this.userRepository.count());
         }
     }
 

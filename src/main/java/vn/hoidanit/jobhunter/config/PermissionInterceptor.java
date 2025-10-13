@@ -9,6 +9,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.Role;
 import vn.hoidanit.jobhunter.domain.User;
@@ -17,6 +18,7 @@ import vn.hoidanit.jobhunter.util.SecurityUtil;
 import vn.hoidanit.jobhunter.util.error.PermissionException;
 
 @RequiredArgsConstructor
+@Slf4j
 public class PermissionInterceptor implements HandlerInterceptor {
 
     private final UserService userService;
@@ -31,10 +33,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
         String path = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String requestURI = request.getRequestURI();
         String httpMethod = request.getMethod();
-        System.out.println(">>> RUN preHandle");
-        System.out.println(">>> path= " + path);
-        System.out.println(">>> httpMethod= " + httpMethod);
-        System.out.println(">>> requestURI= " + requestURI);
+        log.debug(">>> RUN preHandle");
+        log.debug(">>> path= {}", path);
+        log.debug(">>> httpMethod= {}", httpMethod);
+        log.debug(">>> requestURI= {}", requestURI);
 
         // check permission
         String email = SecurityUtil.getCurrentUserLogin().orElse("");

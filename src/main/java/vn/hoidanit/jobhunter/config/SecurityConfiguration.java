@@ -25,10 +25,12 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.util.SecurityUtil;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
+@Slf4j
 public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -56,7 +58,7 @@ public class SecurityConfiguration {
             try {
                 return jwtDecoder.decode(token);
             } catch (Exception e) {
-                System.out.println(">>> JWT error: " + e.getMessage());
+                log.error(">>> JWT error: {}", e.getMessage());
                 throw e;
             }
         };

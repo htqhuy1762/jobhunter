@@ -12,9 +12,11 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
@@ -29,7 +31,7 @@ public class EmailService {
             message.setText(content, isHtml);
             this.javaMailSender.send(mimeMessage);
         } catch (MailException | MessagingException e) {
-            System.out.println("ERROR SEND EMAIL: " + e);
+            log.error(">>> ERROR SEND EMAIL: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send email", e);
         }
     }

@@ -26,10 +26,12 @@ import org.springframework.stereotype.Service;
 import com.nimbusds.jose.util.Base64;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.jobhunter.domain.response.ResLoginDTO;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityUtil {
     private final JwtEncoder jwtEncoder;
 
@@ -106,7 +108,7 @@ public class SecurityUtil {
                 try {
                     return jwtDecoder.decode(refreshToken);
                 } catch (Exception e) {
-                    System.out.println(">>> Refresh token error: " + e.getMessage());
+                    log.error(">>> Refresh token error: {}", e.getMessage());
                     throw e;
                 }
     }
