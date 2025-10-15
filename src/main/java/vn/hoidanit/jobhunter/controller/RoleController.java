@@ -70,7 +70,7 @@ public class RoleController {
             throw new IdInvalidException("Role với id = " + id + " không tồn tại");
         }
         this.roleService.delete(id);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/roles")

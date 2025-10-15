@@ -75,6 +75,6 @@ public class SkillController {
         }
 
         this.skillService.deleteSkill(id);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 }

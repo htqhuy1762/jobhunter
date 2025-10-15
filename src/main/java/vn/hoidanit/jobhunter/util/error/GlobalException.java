@@ -62,7 +62,7 @@ public class GlobalException {
         restResponse.setError("404 Not Found. URL may not exist...");
         restResponse.setMessage(ex.getMessage());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(restResponse);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(restResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

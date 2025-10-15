@@ -71,7 +71,7 @@ public class PermissionController {
         }
 
         this.permissionService.delete(id);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/permissions")

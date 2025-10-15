@@ -63,7 +63,7 @@ public class JobController {
         }
 
         this.jobService.delete(id);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/jobs/{id}")

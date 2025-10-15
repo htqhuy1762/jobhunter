@@ -33,8 +33,9 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @PostMapping("/companies")
+    @ApiMessage("Create a company")
     @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
-    public ResponseEntity<?> createCompany(@Valid @RequestBody Company reqCompany) {
+    public ResponseEntity<Company> createCompany(@Valid @RequestBody Company reqCompany) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.companyService.handleCreateCompany(reqCompany));
     }
 
@@ -53,6 +54,7 @@ public class CompanyController {
     }
 
     @PutMapping("/companies")
+    @ApiMessage("Update a company")
     @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<Company> updateCompany(@Valid @RequestBody Company reqCompany) {
         Company updatedCompany = this.companyService.handleUpdateCompany(reqCompany);
@@ -60,9 +62,10 @@ public class CompanyController {
     }
 
     @DeleteMapping("/companies/{id}")
+    @ApiMessage("Delete a company")
     @Secured({"SUPER_ADMIN", "ROLE_ADMIN"})
     public ResponseEntity<Void> deleteCompany(@PathVariable("id") long id) {
         this.companyService.handleDeleteCompany(id);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.noContent().build();
     }
 }

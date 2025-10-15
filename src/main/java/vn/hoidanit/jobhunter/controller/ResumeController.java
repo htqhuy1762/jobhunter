@@ -131,7 +131,7 @@ public class ResumeController {
         }
 
         this.resumeService.delete(id);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/resumes/{id}")

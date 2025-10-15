@@ -232,6 +232,6 @@ public class AuthController {
         // Thực hiện đổi mật khẩu
         this.userService.handleChangePassword(email, reqChangePasswordDTO.getOldPassword(), reqChangePasswordDTO.getNewPassword());
 
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 }

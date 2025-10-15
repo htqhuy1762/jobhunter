@@ -94,6 +94,6 @@ public class UserController {
         }
         
         this.userService.handleDeleteUser(id);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.noContent().build();
     }
 }
