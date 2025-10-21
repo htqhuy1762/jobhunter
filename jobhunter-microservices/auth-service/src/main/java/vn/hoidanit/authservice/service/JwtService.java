@@ -41,7 +41,7 @@ public class JwtService {
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
+    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
     /**
      * Create Access Token (15 minutes)
@@ -55,12 +55,19 @@ public class JwtService {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
-        // Permissions
+        // Permissions - Handle null/lazy loading safely
         List<String> listAuthority = new ArrayList<>();
-        if (dto.getUser().getRole() != null && dto.getUser().getRole().getPermissions() != null) {
-            dto.getUser().getRole().getPermissions().forEach(permission -> {
-                listAuthority.add(permission.getName());
-            });
+        try {
+            if (dto.getUser().getRole() != null && dto.getUser().getRole().getPermissions() != null) {
+                dto.getUser().getRole().getPermissions().forEach(permission -> {
+                    if (permission != null && permission.getName() != null) {
+                        listAuthority.add(permission.getName());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            // Handle LazyInitializationException or any other exception
+            // Continue with empty permissions list
         }
 
         JwtClaimsSet claims = JwtClaimsSet.builder()

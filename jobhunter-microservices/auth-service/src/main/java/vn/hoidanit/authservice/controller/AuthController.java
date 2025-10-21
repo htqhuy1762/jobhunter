@@ -41,17 +41,31 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
+        log.info("=== LOGIN ATTEMPT START ===");
         log.info("User attempting login: {}", loginDTO.getUsername());
 
-        // Authenticate
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                loginDTO.getUsername(), loginDTO.getPassword());
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            // Check if user exists first
+            User userCheck = this.userService.handleGetUserByUsername(loginDTO.getUsername());
+            if (userCheck == null) {
+                log.error("Login failed: User not found - {}", loginDTO.getUsername());
+                throw new RuntimeException("Invalid username or password");
+            }
+            log.info("User found in database: {} (ID: {})", userCheck.getEmail(), userCheck.getId());
+            log.debug("Password from request length: {}", loginDTO.getPassword() != null ? loginDTO.getPassword().length() : 0);
+            log.debug("Password hash in DB starts with: {}", userCheck.getPassword().substring(0, Math.min(20, userCheck.getPassword().length())));
 
-        // Prepare response
-        ResLoginDTO res = new ResLoginDTO();
-        User currentUserDB = this.userService.handleGetUserByUsername(loginDTO.getUsername());
+            // Authenticate
+            log.info("Attempting authentication...");
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    loginDTO.getUsername(), loginDTO.getPassword());
+            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.info("Authentication successful for user: {}", loginDTO.getUsername());
+
+            // Prepare response
+            ResLoginDTO res = new ResLoginDTO();
+            User currentUserDB = this.userService.handleGetUserByUsername(loginDTO.getUsername());
 
         if (currentUserDB != null) {
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
@@ -62,28 +76,40 @@ public class AuthController {
             res.setUser(userLogin);
         }
 
-        // Create Access Token
-        String accessToken = this.jwtService.createAccessToken(authentication.getName(), res);
-        res.setAccessToken(accessToken);
+            // Create Access Token
+            String accessToken = this.jwtService.createAccessToken(authentication.getName(), res);
+            res.setAccessToken(accessToken);
 
-        // Create Refresh Token
-        String refreshToken = this.jwtService.createRefreshToken(loginDTO.getUsername(), res);
+            // Create Refresh Token
+            String refreshToken = this.jwtService.createRefreshToken(loginDTO.getUsername(), res);
 
-        // *** LƯU REFRESH TOKEN VÀO REDIS ***
-        this.tokenService.saveRefreshToken(loginDTO.getUsername(), refreshToken);
-        log.info("Saved refresh token to Redis for user: {}", loginDTO.getUsername());
+            // *** LƯU REFRESH TOKEN VÀO REDIS ***
+            this.tokenService.saveRefreshToken(loginDTO.getUsername(), refreshToken);
+            log.info("Saved refresh token to Redis for user: {}", loginDTO.getUsername());
 
-        // Set cookie
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(refreshTokenExpiration)
-                .build();
+            // Set cookie
+            ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(refreshTokenExpiration)
+                    .build();
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
-                .body(res);
+            log.info("=== LOGIN SUCCESS for user: {} ===", loginDTO.getUsername());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                    .body(res);
+
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            log.error("=== LOGIN FAILED: Bad credentials for user: {} ===", loginDTO.getUsername());
+            log.error("Error message: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("=== LOGIN FAILED: Unexpected error for user: {} ===", loginDTO.getUsername());
+            log.error("Error type: {}", e.getClass().getName());
+            log.error("Error message: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @GetMapping("/account")
