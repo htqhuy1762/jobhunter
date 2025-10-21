@@ -10,8 +10,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import vn.hoidanit.jobservice.client.CompanyClient;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.Skill;
+import vn.hoidanit.jobservice.dto.CompanyDTO;
 import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
@@ -20,9 +23,11 @@ import vn.hoidanit.jobservice.repository.SkillRepository;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JobService {
     private final JobRepository jobRepository;
     private final SkillRepository skillRepository;
+    private final CompanyClient companyClient;
 
     public ResCreateJobDTO create(Job j) {
         // Check Skill

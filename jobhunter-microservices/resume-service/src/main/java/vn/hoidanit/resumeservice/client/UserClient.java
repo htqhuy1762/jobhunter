@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import vn.hoidanit.resumeservice.dto.UserDTO;
 
-@FeignClient(name = "auth-service")
+@FeignClient(name = "auth-service", fallback = UserClientFallback.class)
 public interface UserClient {
 
     @GetMapping("/api/v1/users/{id}")

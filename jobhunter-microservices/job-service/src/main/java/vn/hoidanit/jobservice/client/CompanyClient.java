@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import vn.hoidanit.jobservice.dto.CompanyDTO;
 
-@FeignClient(name = "company-service")
+@FeignClient(name = "company-service", fallback = CompanyClientFallback.class)
 public interface CompanyClient {
 
     @GetMapping("/api/v1/companies/{id}")

@@ -1,48 +1,64 @@
 package vn.hoidanit.notificationservice.service;
 
-import java.nio.charset.StandardCharsets;
-
-import org.springframework.mail.MailException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
-    private final JavaMailSender javaMailSender;
+
+    private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
-    public void sendEmailSync(String to, String subject, String content, boolean isMultipart, boolean isHtml) {
-        // Prepare message using a Spring helper
-        MimeMessage mimeMessage = this.javaMailSender.createMimeMessage();
+    public void sendSimpleEmail(String to, String subject, String text) {
         try {
-            MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
+            SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(to);
             message.setSubject(subject);
-            message.setText(content, isHtml);
-            this.javaMailSender.send(mimeMessage);
-        } catch (MailException | MessagingException e) {
-            log.error(">>> ERROR SEND EMAIL: {}", e.getMessage(), e);
+            message.setText(text);
+
+            mailSender.send(message);
+            log.info("Simple email sent successfully to: {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send simple email to {}: {}", to, e.getMessage(), e);
             throw new RuntimeException("Failed to send email", e);
         }
     }
 
-    public void sendEmailFromTemplateSync(String to, String subject, String templateName, String username, Object value) {
-        Context context = new Context();
-        context.setVariable("name", username);
-        context.setVariable("jobs", value);
+    public void sendHtmlEmail(String to, String subject, String templateName, Map<String, Object> variables) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        String content = this.templateEngine.process(templateName, context);
-        this.sendEmailSync(to, subject, content, false, true);
+            helper.setTo(to);
+            helper.setSubject(subject);
+
+            // Process Thymeleaf template
+            Context context = new Context();
+            if (variables != null) {
+                context.setVariables(variables);
+            }
+            String htmlContent = templateEngine.process(templateName, context);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("HTML email sent successfully to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send HTML email to {}: {}", to, e.getMessage(), e);
+            throw new RuntimeException("Failed to send email", e);
+        }
     }
 }
+
 

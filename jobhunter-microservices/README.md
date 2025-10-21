@@ -1,14 +1,35 @@
-# JobHunter Microservices Architecture
+# 🚀 JobHunter Microservices Architecture
 
-## Kiến trúc hệ thống
+[![Java](https://img.shields.io/badge/Java-17-orange)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-blue)](https://spring.io/projects/spring-cloud)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
 
-Hệ thống JobHunter đã được chuyển đổi sang kiến trúc microservices với các services sau:
+## 📖 Tổng Quan
+
+Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến trúc Monolith sang Microservices với đầy đủ các tính năng enterprise-grade.
+
+### ✨ Tính Năng Nổi Bật
+
+✅ **API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
+✅ **Service Discovery** tự động với Netflix Eureka  
+✅ **Message Queue** với RabbitMQ cho async communication  
+✅ **Distributed Tracing** với Zipkin  
+✅ **Resilience Pattern** - Circuit Breaker, Retry, Fallback  
+✅ **Docker Support** đầy đủ với Docker Compose  
+✅ **Health Checks** và Monitoring với Actuator  
+✅ **Centralized Configuration** với Spring Cloud Config  
+
+---
+
+## 🏗️ Kiến Trúc Hệ Thống
 
 ### Infrastructure Services
 - **Eureka Server** (Port 8761): Service Discovery & Registry
 - **API Gateway** (Port 8080): Entry point, routing, load balancing, rate limiting
 - **MySQL** (Port 3306): Database
 - **Redis** (Port 6379): Caching & Rate Limiting
+- **RabbitMQ** (Port 5672/15672): Message Broker for async communication
 - **Zipkin** (Port 9411): Distributed Tracing
 
 ### Business Services
@@ -19,23 +40,373 @@ Hệ thống JobHunter đã được chuyển đổi sang kiến trúc microserv
 - **File Service** (Port 8085): File Upload/Download
 - **Notification Service** (Port 8086): Email & Notification
 
-## Cách chạy hệ thống
+---
 
-### 1. Chạy từng service riêng lẻ (Development)
+## 🚀 Quick Start
+
+### Bước 1: Chuẩn bị môi trường
 
 ```bash
-# Chạy Eureka Server
-cd eureka-server
-gradlew bootRun
+# Copy file cấu hình môi trường
+cp .env.example .env
 
-# Chạy Auth Service
-cd auth-service
-gradlew bootRun
+# Chỉnh sửa .env với thông tin email của bạn
+# MAIL_USERNAME=your-email@gmail.com
+# MAIL_PASSWORD=your-app-password
+```
 
-# Chạy API Gateway
-cd api-gateway
-gradlew bootRun
+### Bước 2: Build tất cả services
 
+```bash
+# Windows
+build-all.bat
+
+# Linux/Mac
+chmod +x build-all.sh
+./build-all.sh
+```
+
+### Bước 3: Khởi động hệ thống
+
+```bash
+# Khởi động tất cả services
+docker-compose up -d
+
+# Kiểm tra trạng thái
+docker-compose ps
+
+# Xem logs
+docker-compose logs -f
+```
+
+### Bước 4: Dừng hệ thống
+
+```bash
+# Dừng tất cả services
+docker-compose down
+
+# Dừng và xóa volumes
+docker-compose down -v
+```
+
+---
+
+## 💻 Development Mode
+
+Chạy từng service riêng lẻ để phát triển:
+
+```bash
+# 1. Khởi động infrastructure
+docker-compose up -d mysql redis rabbitmq zipkin
+
+# 2. Chạy Eureka Server
+cd eureka-server && gradlew bootRun
+
+# 3. Chạy API Gateway
+cd api-gateway && gradlew bootRun
+
+# 4. Chạy các business services
+cd auth-service && gradlew bootRun
+cd company-service && gradlew bootRun
+# ... và các services khác
+```
+
+---
+
+## 🔍 Monitoring & Management
+
+### Dashboards & UIs
+
+| Service | URL | Mô tả |
+|---------|-----|-------|
+| **Eureka Dashboard** | http://localhost:8761 | Xem tất cả services đang chạy |
+| **API Gateway** | http://localhost:8080 | Entry point cho tất cả API |
+| **Zipkin Tracing** | http://localhost:9411 | Distributed tracing & performance monitoring |
+| **RabbitMQ Management** | http://localhost:15672 | Message queue dashboard (admin/admin123) |
+
+### Health Checks
+
+```bash
+# Kiểm tra health của Gateway
+curl http://localhost:8080/actuator/health
+
+# Xem tất cả routes
+curl http://localhost:8080/actuator/gateway/routes
+
+# Xem metrics
+curl http://localhost:8080/actuator/prometheus
+```
+
+---
+
+## 📡 API Endpoints
+
+Tất cả requests đi qua API Gateway tại `http://localhost:8080`
+
+### 🔐 Authentication APIs
+```http
+POST   /api/v1/auth/register          # Đăng ký tài khoản
+POST   /api/v1/auth/login             # Đăng nhập
+GET    /api/v1/auth/refresh           # Refresh token
+POST   /api/v1/auth/logout            # Đăng xuất
+GET    /api/v1/auth/account           # Thông tin tài khoản
+```
+
+### 👥 User Management APIs
+```http
+GET    /api/v1/users                  # Danh sách users (Admin)
+POST   /api/v1/users                  # Tạo user (Admin)
+GET    /api/v1/users/{id}             # Chi tiết user
+PUT    /api/v1/users                  # Cập nhật user
+DELETE /api/v1/users/{id}             # Xóa user (Admin)
+```
+
+### 🏢 Company APIs
+```http
+GET    /api/v1/companies              # Danh sách công ty
+POST   /api/v1/companies              # Tạo công ty (HR)
+GET    /api/v1/companies/{id}         # Chi tiết công ty
+PUT    /api/v1/companies              # Cập nhật công ty (HR)
+DELETE /api/v1/companies/{id}         # Xóa công ty (Admin)
+```
+
+### 💼 Job APIs
+```http
+GET    /api/v1/jobs                   # Danh sách việc làm (Public)
+POST   /api/v1/jobs                   # Đăng tin tuyển dụng (HR)
+GET    /api/v1/jobs/{id}              # Chi tiết công việc
+PUT    /api/v1/jobs                   # Cập nhật công việc (HR)
+DELETE /api/v1/jobs/{id}              # Xóa công việc (HR)
+GET    /api/v1/skills                 # Danh sách kỹ năng
+```
+
+### 📄 Resume APIs
+```http
+GET    /api/v1/resumes                # Danh sách CV của user
+POST   /api/v1/resumes                # Nộp hồ sơ ứng tuyển
+GET    /api/v1/resumes/{id}           # Chi tiết hồ sơ
+PUT    /api/v1/resumes                # Cập nhật hồ sơ
+DELETE /api/v1/resumes/{id}           # Xóa hồ sơ
+```
+
+### 📁 File APIs
+```http
+POST   /api/v1/files/upload           # Upload file
+GET    /api/v1/storage/{filename}     # Download file
+```
+
+### 📧 Notification APIs
+```http
+POST   /api/v1/subscribers            # Đăng ký nhận thông báo (Public)
+GET    /api/v1/subscribers            # Danh sách subscribers (Admin)
+POST   /api/v1/emails/send            # Gửi email (Admin)
+```
+
+---
+
+## 🎯 Các Cải Tiến Đã Hoàn Thành
+
+### ✅ Infrastructure
+- [x] API Gateway với Rate Limiting, Circuit Breaker
+- [x] Service Discovery với Netflix Eureka
+- [x] Distributed Tracing với Zipkin
+- [x] Message Queue với RabbitMQ
+- [x] Redis cho caching và rate limiting
+- [x] MySQL database
+
+### ✅ Resilience Patterns
+- [x] Circuit Breaker cho tất cả services
+- [x] Fallback Controllers trong API Gateway
+- [x] Retry mechanism với Resilience4j
+- [x] Rate Limiting per endpoint
+- [x] Health checks tự động
+
+### ✅ Async Communication
+- [x] RabbitMQ configuration
+- [x] Email Queue với Producer/Consumer
+- [x] Message retry mechanism
+- [x] Dead Letter Queue support
+
+### ✅ Docker & Deployment
+- [x] Dockerfile cho từng service
+- [x] Docker Compose orchestration
+- [x] Application profiles (local, docker)
+- [x] Build scripts tự động
+- [x] Environment variables support
+
+### ✅ Monitoring & Observability
+- [x] Spring Boot Actuator endpoints
+- [x] Prometheus metrics
+- [x] Distributed tracing với Zipkin
+- [x] Centralized logging
+- [x] Health indicators
+
+---
+
+## 📚 Tài Liệu
+
+- 📖 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Hướng dẫn triển khai chi tiết
+- 🔧 **[build-all.bat](./build-all.bat)** - Script build cho Windows
+- 🔧 **[build-all.sh](./build-all.sh)** - Script build cho Linux/Mac
+- 🏥 **[health-check.bat](./health-check.bat)** - Health check script cho Windows
+- 🏥 **[health-check.sh](./health-check.sh)** - Health check script cho Linux/Mac
+
+---
+
+## 🛠️ Troubleshooting
+
+### Service không kết nối được Eureka?
+```bash
+# Kiểm tra Eureka logs
+docker-compose logs eureka-server
+
+# Restart Eureka
+docker-compose restart eureka-server
+```
+
+### Gateway trả về 503 Service Unavailable?
+```bash
+# Circuit Breaker có thể đang OPEN, chờ 60s hoặc restart
+docker-compose restart api-gateway
+```
+
+### Email không gửi được?
+```bash
+# Kiểm tra RabbitMQ
+docker-compose logs rabbitmq
+
+# Kiểm tra Notification Service
+docker-compose logs notification-service
+```
+
+### Database connection failed?
+```bash
+# Kiểm tra MySQL
+docker-compose exec mysql mysql -uroot -proot -e "SHOW DATABASES;"
+
+# Restart MySQL
+docker-compose restart mysql
+```
+
+---
+
+## 🤝 Contributing
+
+Mọi đóng góp đều được chào đón! Vui lòng:
+1. Fork repository
+2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+**Developed with ❤️ by JobHunter Team**
+
+
+### Notifications
+- POST `/api/v1/subscribers` - Đăng ký nhận thông báo (Public)
+- GET `/api/v1/subscribers` - Danh sách subscribers (Admin)
+- POST `/api/v1/emails/send` - Gửi email (Admin)
+
+---
+
+## 🎯 Các Cải Tiến Đã Hoàn Thành
+
+### ✅ Infrastructure
+- [x] API Gateway với Rate Limiting, Circuit Breaker
+- [x] Service Discovery với Netflix Eureka
+- [x] Distributed Tracing với Zipkin
+- [x] Message Queue với RabbitMQ
+- [x] Redis cho caching và rate limiting
+- [x] MySQL database
+
+### ✅ Resilience Patterns
+- [x] Circuit Breaker cho tất cả services
+- [x] Fallback Controllers trong API Gateway
+- [x] Retry mechanism với Resilience4j
+- [x] Rate Limiting per endpoint
+- [x] Health checks tự động
+
+### ✅ Async Communication
+- [x] RabbitMQ configuration
+- [x] Email Queue với Producer/Consumer
+- [x] Message retry mechanism
+- [x] Dead Letter Queue support
+
+### ✅ Docker & Deployment
+- [x] Dockerfile cho từng service
+- [x] Docker Compose orchestration
+- [x] Application profiles (local, docker)
+- [x] Build scripts tự động
+- [x] Environment variables support
+
+### ✅ Monitoring & Observability
+- [x] Spring Boot Actuator endpoints
+- [x] Prometheus metrics
+- [x] Distributed tracing với Zipkin
+- [x] Centralized logging
+- [x] Health indicators
+
+---
+
+## 📚 Tài Liệu
+
+- 📖 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Hướng dẫn triển khai chi tiết
+- 🔧 **[build-all.bat](./build-all.bat)** - Script build cho Windows
+- 🔧 **[build-all.sh](./build-all.sh)** - Script build cho Linux/Mac
+
+---
+
+## 🛠️ Troubleshooting
+
+### Service không kết nối được Eureka?
+```bash
+# Kiểm tra Eureka logs
+docker-compose logs eureka-server
+
+# Restart Eureka
+docker-compose restart eureka-server
+```
+
+### Gateway trả về 503 Service Unavailable?
+```bash
+# Circuit Breaker có thể đang OPEN, chờ 60s hoặc restart
+docker-compose restart api-gateway
+```
+
+### Email không gửi được?
+```bash
+# Kiểm tra RabbitMQ
+docker-compose logs rabbitmq
+
+# Kiểm tra Notification Service
+docker-compose logs notification-service
+```
+
+---
+
+## 🤝 Contributing
+
+Mọi đóng góp đều được chào đón! Vui lòng:
+1. Fork repository
+2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
+# 3. Chạy API Gateway
+cd api-gateway && gradlew bootRun
+
+# 4. Chạy các business services
+cd auth-service && gradlew bootRun
+cd company-service && gradlew bootRun
+# ... và các services khác
 # Tương tự cho các services khác...
 ```
 
@@ -167,229 +538,3 @@ MAIL_PASSWORD=your-app-password
 2. Đảm bảo Redis đã được cài đặt và chạy
 3. Các services cần đăng ký với Eureka trước khi Gateway có thể route request
 4. Kiểm tra logs của từng service nếu có lỗi
-version: '3.8'
-
-services:
-  # ========== INFRASTRUCTURE SERVICES ==========
-  
-  # MySQL Database
-  mysql:
-    image: mysql:8.0
-    container_name: jobhunter-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: jobhunter
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - microservices-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis
-  redis:
-    image: redis:7-alpine
-    container_name: jobhunter-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - microservices-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Zipkin for Distributed Tracing
-  zipkin:
-    image: openzipkin/zipkin:latest
-    container_name: jobhunter-zipkin
-    ports:
-      - "9411:9411"
-    networks:
-      - microservices-network
-
-  # ========== MICROSERVICES ==========
-  
-  # Eureka Server (Service Discovery)
-  eureka-server:
-    build:
-      context: ./eureka-server
-      dockerfile: Dockerfile
-    container_name: eureka-server
-    ports:
-      - "8761:8761"
-    networks:
-      - microservices-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-
-  # Auth Service
-  auth-service:
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
-    container_name: auth-service
-    ports:
-      - "8081:8081"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-
-  # API Gateway
-  api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
-    container_name: api-gateway
-    ports:
-      - "8080:8080"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_REDIS_HOST=redis
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-
-  # Company Service
-  company-service:
-    build:
-      context: ./company-service
-      dockerfile: Dockerfile
-    container_name: company-service
-    ports:
-      - "8082:8082"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-
-  # Job Service
-  job-service:
-    build:
-      context: ./job-service
-      dockerfile: Dockerfile
-    container_name: job-service
-    ports:
-      - "8083:8083"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-
-  # Resume Service
-  resume-service:
-    build:
-      context: ./resume-service
-      dockerfile: Dockerfile
-    container_name: resume-service
-    ports:
-      - "8084:8084"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-
-  # File Service
-  file-service:
-    build:
-      context: ./file-service
-      dockerfile: Dockerfile
-    container_name: file-service
-    ports:
-      - "8085:8085"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    volumes:
-      - file_storage:/app/storage
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-
-  # Notification Service
-  notification-service:
-    build:
-      context: ./notification-service
-      dockerfile: Dockerfile
-    container_name: notification-service
-    ports:
-      - "8086:8086"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
-
-networks:
-  microservices-network:
-    driver: bridge
-
-volumes:
-  mysql_data:
-  redis_data:
-  file_storage:
-

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import vn.hoidanit.resumeservice.dto.JobDTO;
 
-@FeignClient(name = "job-service")
+@FeignClient(name = "job-service", fallback = JobClientFallback.class)
 public interface JobClient {
 
     @GetMapping("/api/v1/jobs/{id}")

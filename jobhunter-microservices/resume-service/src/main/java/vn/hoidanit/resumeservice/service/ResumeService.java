@@ -28,10 +28,18 @@ import vn.hoidanit.resumeservice.util.SecurityUtil;
 @Slf4j
 public class ResumeService {
     private final ResumeRepository resumeRepository;
-        // Validate userId and jobId are not null
+    private final UserClient userClient;
+    private final JobClient jobClient;
 
     public Optional<Resume> fetchById(long id) {
         return this.resumeRepository.findById(id);
+    }
+
+    public boolean checkResumeExistByUserAndJob(Resume resume) {
+        // Validate userId and jobId are not null
+        if (resume.getUserId() == null || resume.getJobId() == null) {
+            return false;
+        }
 
         // Call other services to validate if user and job exist
         try {
@@ -52,14 +60,6 @@ public class ResumeService {
             log.error("Error calling other services: {}", e.getMessage());
             return false;
         }
-
-    public boolean checkResumeExistByUserAndJob(Resume resume) {
-        // In microservices, we only check if userId and jobId are not null
-        // The actual validation should be done via inter-service communication
-        if (resume.getUserId() == null || resume.getJobId() == null) {
-            return false;
-        }
-        return true;
     }
 
     public ResCreateResumeDTO create(Resume resume) {
@@ -71,7 +71,7 @@ public class ResumeService {
         res.setCreatedBy(resume.getCreatedBy());
 
         // Fetch user info via FeignClient
-
+        if (resume.getUserId() != null) {
             try {
                 UserDTO user = userClient.getUserById(resume.getUserId());
                 if (user != null) {
@@ -81,24 +81,31 @@ public class ResumeService {
                 log.error("Error fetching user info: {}", e.getMessage());
                 res.setUser(new ResFetchResumeDTO.UserResume(resume.getUserId(), "User #" + resume.getUserId()));
             }
-        resume = this.resumeRepository.save(resume);
+        }
 
         // Fetch job info via FeignClient
-        ResUpdateResumeDTO res = new ResUpdateResumeDTO();
+        if (resume.getJobId() != null) {
             try {
                 JobDTO job = jobClient.getJobById(resume.getJobId());
                 if (job != null) {
                     res.setJob(new ResFetchResumeDTO.JobResume(job.getId(), job.getName()));
-                    // Set company name if available
-                    if (job.getCompany() != null) {
-                        res.setCompanyName(job.getCompany().getName());
-                    }
                 }
             } catch (Exception e) {
                 log.error("Error fetching job info: {}", e.getMessage());
                 res.setJob(new ResFetchResumeDTO.JobResume(resume.getJobId(), "Job #" + resume.getJobId()));
             }
+        }
+
+        return res;
+    }
+
+    public ResUpdateResumeDTO update(Resume resume) {
+        resume = this.resumeRepository.save(resume);
+
+        ResUpdateResumeDTO res = new ResUpdateResumeDTO();
+        res.setUpdatedAt(resume.getUpdatedAt());
         res.setUpdatedBy(resume.getUpdatedBy());
+
         return res;
     }
 

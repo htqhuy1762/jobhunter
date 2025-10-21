@@ -29,41 +29,61 @@ spring:
             maxAge: 3600
 
       routes:
-        # Auth Service - Public endpoints
-        - id: auth-service-public
+        - id: auth-service-login
           uri: lb://auth-service
           predicates:
-            - Path=/api/v1/auth/login,/api/v1/auth/register,/api/v1/auth/refresh
+            - Path=/api/v1/auth/login
+            - Method=POST
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
 
-        # Auth Service - Protected endpoints
-        - id: auth-service-protected
+        - id: auth-service-register
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/register
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 3
+                redis-rate-limiter.burstCapacity: 5
+
+        - id: auth-service-all
           uri: lb://auth-service
           predicates:
             - Path=/api/v1/auth/**,/api/v1/users/**,/api/v1/roles/**,/api/v1/permissions/**
           filters:
             - JwtAuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: authServiceCircuitBreaker
+                fallbackUri: forward:/fallback/auth-service
 
-        # Company Service
         - id: company-service
           uri: lb://company-service
           predicates:
             - Path=/api/v1/companies/**
           filters:
             - JwtAuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: companyServiceCircuitBreaker
+                fallbackUri: forward:/fallback/company-service
 
-        # Job Service - Public (GET only)
         - id: job-service-public
           uri: lb://job-service
           predicates:
             - Path=/api/v1/jobs/**,/api/v1/skills/**
             - Method=GET
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
 
-        # Job Service - Protected (POST, PUT, DELETE)
         - id: job-service-protected
           uri: lb://job-service
           predicates:
@@ -71,84 +91,95 @@ spring:
             - Method=POST,PUT,DELETE
           filters:
             - JwtAuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: jobServiceCircuitBreaker
+                fallbackUri: forward:/fallback/job-service
 
-        # Resume Service
         - id: resume-service
           uri: lb://resume-service
           predicates:
             - Path=/api/v1/resumes/**
           filters:
             - JwtAuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: resumeServiceCircuitBreaker
+                fallbackUri: forward:/fallback/resume-service
 
-        # File Service
         - id: file-service
           uri: lb://file-service
           predicates:
             - Path=/api/v1/files/**,/api/v1/storage/**
           filters:
             - JwtAuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: fileServiceCircuitBreaker
+                fallbackUri: forward:/fallback/file-service
 
-        # Notification Service - Public
         - id: notification-service-public
           uri: lb://notification-service
           predicates:
             - Path=/api/v1/subscribers
             - Method=POST
 
-        # Notification Service - Protected
         - id: notification-service-protected
           uri: lb://notification-service
           predicates:
             - Path=/api/v1/subscribers/**,/api/v1/emails/**
           filters:
             - JwtAuthenticationFilter
-
-      default-filters:
-        - AddRequestHeader=X-Gateway-Version, 1.0
+            - name: CircuitBreaker
+              args:
+                name: notificationServiceCircuitBreaker
+                fallbackUri: forward:/fallback/notification-service
 
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      timeout: 60000
+      host: redis
+      port: 6379
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8081
+          issuer-uri: http://auth-service:8081
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+      defaultZone: http://eureka-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
     prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 60s
+        failureRateThreshold: 50
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
   tracing:
     sampling:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+      endpoint: http://zipkin:9411/api/v2/spans
 
 logging:
   level:
     root: INFO
-    org.springframework.cloud.gateway: DEBUG
-  file:
-    name: logs/gateway.log
-
-jwt:
-  secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
-
+    vn.hoidanit.gateway: DEBUG
