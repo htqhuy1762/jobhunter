@@ -7,7 +7,7 @@ spring:
 
 eureka:
   instance:
-    hostname: localhost
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
   client:
     registerWithEureka: false
     fetchRegistry: false
@@ -15,7 +15,7 @@ eureka:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
     enable-self-preservation: false
-    eviction-interval-timer-in-ms: 3000
+    eviction-interval-timer-in-ms: 15000
 
 management:
   endpoints:
@@ -28,6 +28,6 @@ management:
 
 logging:
   level:
-    com.netflix.eureka: INFO
-    com.netflix.discovery: INFO
-
+    root: INFO
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG

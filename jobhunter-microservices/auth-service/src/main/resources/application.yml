@@ -6,47 +6,29 @@ spring:
     name: auth-service
 
   datasource:
-    url: jdbc:mysql://localhost:3307/jobhunter_auth?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
+    show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-    show-sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password:
-      timeout: 60000
-
-# Eureka Client
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
   instance:
     prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 30
-    instance-id: ${spring.application.name}:${random.value}
 
-# JWT Configuration
-hoidanit:
-  jwt:
-    base64-secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
-    access-token-validity-in-seconds: 900
-    refresh-token-validity-in-seconds: 604800
-
-# Management & Monitoring
 management:
   endpoints:
     web:
@@ -55,26 +37,21 @@ management:
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      prometheus:
-        enabled: true
   tracing:
     sampling:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: http://localhost:9411/api/v2/spans
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
 
-# Logging
 logging:
   level:
     root: INFO
     vn.hoidanit.authservice: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   file:
     name: logs/auth-service.log
 
+jwt:
+  secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
+  access-token-validity: 900000
+  refresh-token-validity: 604800000
