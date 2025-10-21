@@ -70,31 +70,6 @@ public class ResumeService {
         res.setCreatedAt(resume.getCreatedAt());
         res.setCreatedBy(resume.getCreatedBy());
 
-        // Fetch user info via FeignClient
-        if (resume.getUserId() != null) {
-            try {
-                UserDTO user = userClient.getUserById(resume.getUserId());
-                if (user != null) {
-                    res.setUser(new ResFetchResumeDTO.UserResume(user.getId(), user.getName()));
-                }
-            } catch (Exception e) {
-                log.error("Error fetching user info: {}", e.getMessage());
-                res.setUser(new ResFetchResumeDTO.UserResume(resume.getUserId(), "User #" + resume.getUserId()));
-            }
-        }
-
-        // Fetch job info via FeignClient
-        if (resume.getJobId() != null) {
-            try {
-                JobDTO job = jobClient.getJobById(resume.getJobId());
-                if (job != null) {
-                    res.setJob(new ResFetchResumeDTO.JobResume(job.getId(), job.getName()));
-                }
-            } catch (Exception e) {
-                log.error("Error fetching job info: {}", e.getMessage());
-                res.setJob(new ResFetchResumeDTO.JobResume(resume.getJobId(), "Job #" + resume.getJobId()));
-            }
-        }
 
         return res;
     }

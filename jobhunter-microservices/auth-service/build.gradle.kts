@@ -47,8 +47,9 @@ dependencies {
 
     // Monitoring
     implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation("io.micrometer:micrometer-tracing-bridge-brave")
-    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
+    // Zipkin tracing disabled - uncomment below if needed
+    // implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    // implementation("io.zipkin.reporter2:zipkin-reporter-brave")
 
     // Lombok
     compileOnly("org.projectlombok:lombok")

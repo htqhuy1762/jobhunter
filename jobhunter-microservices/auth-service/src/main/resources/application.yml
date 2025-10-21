@@ -37,12 +37,6 @@ management:
   endpoint:
     health:
       show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 logging:
   level:
@@ -50,6 +44,13 @@ logging:
     vn.hoidanit.authservice: DEBUG
   file:
     name: logs/auth-service.log
+
+# JWT Configuration
+hoidanit:
+  jwt:
+    base64-secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
+    access-token-validity-in-seconds: 900
+    refresh-token-validity-in-seconds: 604800
 
 jwt:
   secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
