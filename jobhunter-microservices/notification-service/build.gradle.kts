@@ -30,8 +30,6 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
 
     implementation("com.turkraft.springfilter:jpa:3.1.7")
-    implementation("io.micrometer:micrometer-tracing-bridge-brave")
-    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

@@ -54,9 +54,3 @@ hoidanit:
     base64-secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
     access-token-validity-in-seconds: 900
     refresh-token-validity-in-seconds: 604800
-
-jwt:
-  secret: L2Z1bld/f3VpKSddI7+8VTbzAjjrZZFu8n/1IEYdZj/LMg2y5ztPcPPfVV8WRfQS
-  access-token-validity: 900000
-  refresh-token-validity: 604800000
-

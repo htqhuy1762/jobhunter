@@ -30,9 +30,6 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
-  tracing:
-    sampling:
-      probability: 1.0
 
 logging:
   level:
