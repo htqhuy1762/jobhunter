@@ -14,6 +14,7 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import vn.hoidanit.gateway.service.TokenBlacklistService;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -25,8 +26,11 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    public JwtAuthenticationFilter() {
+    private final TokenBlacklistService tokenBlacklistService;
+
+    public JwtAuthenticationFilter(TokenBlacklistService tokenBlacklistService) {
         super(Config.class);
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -57,16 +61,26 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 String email = claims.get("email", String.class);
                 String roles = claims.get("roles", String.class);
 
-                // Add user context to request headers for downstream services
-                ServerHttpRequest modifiedRequest = request.mutate()
-                        .header("X-User-Id", userId)
-                        .header("X-User-Email", email)
-                        .header("X-User-Roles", roles)
-                        .build();
+                // *** CHECK BLACKLIST TRƯỚC KHI CHO REQUEST ĐI QUA ***
+                return tokenBlacklistService.isAccessTokenBlacklisted(token)
+                        .flatMap(isBlacklisted -> {
+                            if (Boolean.TRUE.equals(isBlacklisted)) {
+                                log.warn("Token is blacklisted for user: {}", email);
+                                return onError(exchange, "Token has been revoked. Please login again.", HttpStatus.UNAUTHORIZED);
+                            }
 
-                log.info("JWT validated for user: {} with roles: {}", email, roles);
+                            // Token hợp lệ và không bị blacklist
+                            // Add user context to request headers for downstream services
+                            ServerHttpRequest modifiedRequest = request.mutate()
+                                    .header("X-User-Id", userId)
+                                    .header("X-User-Email", email)
+                                    .header("X-User-Roles", roles)
+                                    .build();
 
-                return chain.filter(exchange.mutate().request(modifiedRequest).build());
+                            log.info("JWT validated for user: {} with roles: {}", email, roles);
+
+                            return chain.filter(exchange.mutate().request(modifiedRequest).build());
+                        });
 
             } catch (Exception e) {
                 log.error("JWT validation failed: {}", e.getMessage());
