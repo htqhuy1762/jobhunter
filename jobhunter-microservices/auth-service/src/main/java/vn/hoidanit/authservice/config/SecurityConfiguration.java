@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
@@ -34,6 +35,8 @@ public class SecurityConfiguration {
 
     @Value("${hoidanit.jwt.base64-secret}")
     private String jwtKey;
+
+    private final JwtTokenBlacklistFilter jwtTokenBlacklistFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -52,7 +55,9 @@ public class SecurityConfiguration {
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .formLogin(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // *** THÊM BLACKLIST FILTER SAU KHI JWT ĐÃ ĐƯỢC VALIDATE ***
+                .addFilterAfter(jwtTokenBlacklistFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }
