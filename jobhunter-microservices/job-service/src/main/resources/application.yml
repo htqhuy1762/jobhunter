@@ -20,6 +20,12 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
+# Gateway Security - MUST match with API Gateway secret
+gateway:
+  signature:
+    secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
+    enabled: true
+
 eureka:
   client:
     serviceUrl:

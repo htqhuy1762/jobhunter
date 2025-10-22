@@ -129,6 +129,11 @@ spring:
         jwt:
           issuer-uri: http://localhost:8081
 
+# Gateway Security Configuration
+gateway:
+  signature:
+    secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
+
 eureka:
   client:
     serviceUrl:

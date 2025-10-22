@@ -1,65 +1,118 @@
 package vn.hoidanit.jobservice.util;
 
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
-@Service
+/**
+ * Utility class to extract user information from request headers
+ * Headers are set by API Gateway after JWT validation
+ */
+@Slf4j
 public class SecurityUtil {
 
+    private static final String HEADER_USER_ID = "X-User-Id";
+    private static final String HEADER_USER_EMAIL = "X-User-Email";
+    private static final String HEADER_USER_ROLES = "X-User-Roles";
+
     /**
-     * Get current user login from request headers (set by API Gateway)
-     * API Gateway adds X-User-Email header after JWT validation
+     * Get current HTTP request
      */
-    public static Optional<String> getCurrentUserLogin() {
+    private static Optional<HttpServletRequest> getCurrentRequest() {
         try {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String userEmail = request.getHeader("X-User-Email");
-                return Optional.ofNullable(userEmail);
-            }
+            return Optional.ofNullable(attributes).map(ServletRequestAttributes::getRequest);
         } catch (Exception e) {
-            // No request context available
+            log.warn("Could not get current request: {}", e.getMessage());
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     /**
-     * Get current user ID from request headers
+     * Get current user ID from request header (set by API Gateway)
+     * @return User ID or null if not found
      */
-    public static Optional<String> getCurrentUserId() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String userId = request.getHeader("X-User-Id");
-                return Optional.ofNullable(userId);
-            }
-        } catch (Exception e) {
-            // No request context available
-        }
-        return Optional.empty();
+    public static Long getCurrentUserId() {
+        return getCurrentRequest()
+                .map(request -> request.getHeader(HEADER_USER_ID))
+                .map(userId -> {
+                    try {
+                        return Long.parseLong(userId);
+                    } catch (NumberFormatException e) {
+                        log.error("Invalid user ID format: {}", userId);
+                        return null;
+                    }
+                })
+                .orElse(null);
     }
 
     /**
-     * Get current user roles from request headers
+     * Get current user email from request header (set by API Gateway)
+     * @return User email or null if not found
      */
-    public static Optional<String> getCurrentUserRoles() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String roles = request.getHeader("X-User-Roles");
-                return Optional.ofNullable(roles);
-            }
-        } catch (Exception e) {
-            // No request context available
+    public static String getCurrentUserEmail() {
+        return getCurrentRequest()
+                .map(request -> request.getHeader(HEADER_USER_EMAIL))
+                .orElse(null);
+    }
+
+    /**
+     * Get current user roles from request header (set by API Gateway)
+     * @return User roles (comma-separated) or null if not found
+     */
+    public static String getCurrentUserRoles() {
+        return getCurrentRequest()
+                .map(request -> request.getHeader(HEADER_USER_ROLES))
+                .orElse(null);
+    }
+
+    /**
+     * Check if current user has a specific role
+     * @param role Role name to check
+     * @return true if user has the role, false otherwise
+     */
+    public static boolean hasRole(String role) {
+        String roles = getCurrentUserRoles();
+        if (roles == null || roles.isEmpty()) {
+            return false;
         }
-        return Optional.empty();
+        return roles.contains(role);
+    }
+
+    /**
+     * Check if current user is authenticated (has user ID)
+     * @return true if authenticated, false otherwise
+     */
+    public static boolean isAuthenticated() {
+        return getCurrentUserId() != null;
+    }
+
+    /**
+     * Get current user info for logging
+     * @return String with user info
+     */
+    public static String getCurrentUserInfo() {
+        Long userId = getCurrentUserId();
+        String email = getCurrentUserEmail();
+        String roles = getCurrentUserRoles();
+
+        if (userId == null) {
+            return "Anonymous User";
+        }
+
+        return String.format("User[id=%d, email=%s, roles=%s]", userId, email, roles);
+    }
+
+    /**
+     * Get current user login (email) for backward compatibility with JPA @PrePersist/@PreUpdate
+     * @return Optional containing user email
+     */
+    public static java.util.Optional<String> getCurrentUserLogin() {
+        String email = getCurrentUserEmail();
+        return email != null ? java.util.Optional.of(email) : java.util.Optional.empty();
     }
 }
+

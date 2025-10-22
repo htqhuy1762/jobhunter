@@ -6,9 +6,12 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import vn.hoidanit.companyservice.annotation.RequireRole;
 import vn.hoidanit.companyservice.domain.Company;
 import vn.hoidanit.companyservice.dto.ResultPaginationDTO;
 import vn.hoidanit.companyservice.service.CompanyService;
+import vn.hoidanit.companyservice.util.SecurityUtil;
 
 import java.util.Optional;
 
@@ -27,33 +30,55 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RestController
 @RequestMapping("/api/v1/companies")
 @RequiredArgsConstructor
+@Slf4j
 public class CompanyController {
     private final CompanyService companyService;
 
+    /**
+     * Create new company - Only HR and ADMIN can create companies
+     */
     @PostMapping
+    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<Company> createCompany(@Valid @RequestBody Company reqCompany) {
+        log.info("User {} is creating company: {}", SecurityUtil.getCurrentUserInfo(), reqCompany.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(this.companyService.handleCreateCompany(reqCompany));
     }
 
+    /**
+     * Get all companies - Public endpoint (no authentication required via Gateway)
+     */
     @GetMapping
     public ResponseEntity<ResultPaginationDTO> getCompany(@Filter Specification<Company> spec, Pageable pageable) {
         return ResponseEntity.status(HttpStatus.OK).body(this.companyService.handleGetCompany(spec, pageable));
     }
 
+    /**
+     * Get company by ID - Public endpoint
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Company> getCompanyById(@PathVariable("id") long id) {
         Optional<Company> company = this.companyService.findById(id);
         return ResponseEntity.ok().body(company.get());
     }
 
+    /**
+     * Update company - Only HR and ADMIN can update
+     */
     @PutMapping
+    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<Company> updateCompany(@Valid @RequestBody Company reqCompany) {
+        log.info("User {} is updating company ID: {}", SecurityUtil.getCurrentUserInfo(), reqCompany.getId());
         Company updatedCompany = this.companyService.handleUpdateCompany(reqCompany);
         return ResponseEntity.ok(updatedCompany);
     }
 
+    /**
+     * Delete company - Only ADMIN can delete (strict permission)
+     */
     @DeleteMapping("/{id}")
+    @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<Void> deleteCompany(@PathVariable("id") long id) {
+        log.warn("User {} is attempting to delete company ID: {}", SecurityUtil.getCurrentUserInfo(), id);
         this.companyService.handleDeleteCompany(id);
         return ResponseEntity.noContent().build();
     }

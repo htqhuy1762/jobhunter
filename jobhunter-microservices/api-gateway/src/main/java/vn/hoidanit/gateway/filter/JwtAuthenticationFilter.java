@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import vn.hoidanit.gateway.service.TokenBlacklistService;
+import vn.hoidanit.gateway.util.SignatureUtil;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +26,9 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
     @Value("${jwt.secret}")
     private String jwtSecret;
+    @Value("${gateway.signature.secret}")
+    private String gatewaySignatureSecret;
+
 
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -70,14 +74,23 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                             }
 
                             // Token hợp lệ và không bị blacklist
+                            // Generate Gateway Signature to prove request comes from Gateway
+                            long timestamp = System.currentTimeMillis();
+                            String signatureData = SignatureUtil.createSignatureData(userId, email, timestamp);
+                            String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
+                            
                             // Add user context to request headers for downstream services
                             ServerHttpRequest modifiedRequest = request.mutate()
                                     .header("X-User-Id", userId)
                                     .header("X-User-Email", email)
                                     .header("X-User-Roles", roles)
+                                    // ✅ SECURITY: Add Gateway signature to verify request origin
+                                    .header("X-Gateway-Signature", signature)
+                                    .header("X-Gateway-Timestamp", String.valueOf(timestamp))
                                     .build();
 
                             log.info("JWT validated for user: {} with roles: {}", email, roles);
+                            log.debug("Gateway signature added for security verification");
 
                             return chain.filter(exchange.mutate().request(modifiedRequest).build());
                         });

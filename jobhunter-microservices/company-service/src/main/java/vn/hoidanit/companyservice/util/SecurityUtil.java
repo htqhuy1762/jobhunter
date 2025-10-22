@@ -1,4 +1,4 @@
-package vn.hoidanit.resumeservice.util;
+package vn.hoidanit.companyservice.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -104,5 +104,14 @@ public class SecurityUtil {
         }
 
         return String.format("User[id=%d, email=%s, roles=%s]", userId, email, roles);
+    }
+
+    /**
+     * Get current user login (email) for backward compatibility with JPA @PrePersist/@PreUpdate
+     * @return Optional containing user email
+     */
+    public static java.util.Optional<String> getCurrentUserLogin() {
+        String email = getCurrentUserEmail();
+        return email != null ? java.util.Optional.of(email) : java.util.Optional.empty();
     }
 }
