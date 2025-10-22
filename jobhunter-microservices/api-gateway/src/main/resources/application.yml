@@ -13,6 +13,7 @@ spring:
             allowedOrigins:
               - "http://localhost:3000"
               - "http://localhost:4173"
+              - "http://localhost:5173"
             allowedMethods:
               - GET
               - POST
@@ -25,6 +26,8 @@ spring:
             exposedHeaders:
               - Authorization
               - X-Total-Count
+              - Content-Type
+              - Accept
             allowCredentials: true
             maxAge: 3600
 
@@ -48,11 +51,19 @@ spring:
           filters:
             - JwtAuthenticationFilter
 
-        # Company Service
-        - id: company-service
+        # Company Service - Public (GET only)
+        - id: company-service-public
           uri: lb://company-service
           predicates:
             - Path=/api/v1/companies/**
+            - Method=GET
+
+        # Company Service - Protected (POST, PUT, DELETE)
+        - id: company-service-protected
+          uri: lb://company-service
+          predicates:
+            - Path=/api/v1/companies/**
+            - Method=POST,PUT,DELETE
           filters:
             - JwtAuthenticationFilter
 
