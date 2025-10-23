@@ -91,6 +91,14 @@ public class SecurityUtil {
     }
 
     /**
+     * Get current user login (email) - for compatibility with JPA @PrePersist/@PreUpdate
+     * @return Optional containing user email
+     */
+    public static Optional<String> getCurrentUserLogin() {
+        return Optional.ofNullable(getCurrentUserEmail());
+    }
+
+    /**
      * Get current user info for logging
      * @return String with user info
      */
@@ -104,14 +112,5 @@ public class SecurityUtil {
         }
 
         return String.format("User[id=%d, email=%s, roles=%s]", userId, email, roles);
-    }
-
-    /**
-     * Get current user login (email) for backward compatibility with JPA @PrePersist/@PreUpdate
-     * @return Optional containing user email
-     */
-    public static java.util.Optional<String> getCurrentUserLogin() {
-        String email = getCurrentUserEmail();
-        return email != null ? java.util.Optional.of(email) : java.util.Optional.empty();
     }
 }

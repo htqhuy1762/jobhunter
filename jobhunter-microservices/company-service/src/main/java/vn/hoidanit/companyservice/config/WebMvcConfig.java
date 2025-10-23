@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import vn.hoidanit.companyservice.interceptor.AuthorizationInterceptor;
+import vn.hoidanit.companyservice.interceptor.RoleCheckInterceptor;
 
 /**
  * Web MVC Configuration to register interceptors
@@ -13,15 +13,14 @@ import vn.hoidanit.companyservice.interceptor.AuthorizationInterceptor;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final AuthorizationInterceptor authorizationInterceptor;
+    private final RoleCheckInterceptor roleCheckInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(authorizationInterceptor)
-                .addPathPatterns("/api/**")  // Apply to all API endpoints
-                .excludePathPatterns(
-                        "/actuator/**"  // Exclude actuator endpoints
-                );
+        // Role-based access control
+        registry.addInterceptor(roleCheckInterceptor)
+                .addPathPatterns("/api/v1/**")
+                .excludePathPatterns("/actuator/**");
     }
 }
 

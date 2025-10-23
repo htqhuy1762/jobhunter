@@ -33,6 +33,14 @@ dependencies {
     // Spring Cloud
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
 
+    // Resilience4j for Circuit Breaker, Rate Limiter, Retry
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-retry:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-bulkhead:2.1.0")
+
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")
 

@@ -6,11 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to specify required roles for accessing a controller method
+ * Annotation to protect endpoints with role-based access control
+ * Usage: @RequireRole("ADMIN") or @RequireRole({"ADMIN", "HR"})
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireRole {
     String[] value();
-    boolean requireAll() default false;
 }
