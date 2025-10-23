@@ -1,5 +1,6 @@
 package vn.hoidanit.gateway.filter;
 
+import com.nimbusds.jose.util.Base64;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -18,13 +19,12 @@ import vn.hoidanit.gateway.service.TokenBlacklistService;
 import vn.hoidanit.gateway.util.SignatureUtil;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 
 @Component
 @Slf4j
 public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
 
-    @Value("${jwt.secret}")
+    @Value("${hoidanit.jwt.base64-secret}")
     private String jwtSecret;
     @Value("${gateway.signature.secret}")
     private String gatewaySignatureSecret;
@@ -52,18 +52,40 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String token = authHeader.substring(7);
 
             try {
-                // Validate JWT token
-                SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+                // Validate JWT token - decode Base64 secret EXACTLY like auth-service does
+                byte[] keyBytes = Base64.from(jwtSecret).decode();
+                SecretKey key = Keys.hmacShaKeyFor(keyBytes);
                 Claims claims = Jwts.parser()
                         .verifyWith(key)
                         .build()
                         .parseSignedClaims(token)
                         .getPayload();
 
-                // Extract user information from claims
-                String userId = claims.getSubject();
-                String email = claims.get("email", String.class);
-                String roles = claims.get("roles", String.class);
+                // Extract user information from claims (auth-service structure)
+                final String email = claims.getSubject(); // subject is email
+                Object userObj = claims.get("user");
+
+                // Extract userId from user object
+                final String userId;
+                if (userObj instanceof java.util.Map) {
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> userMap = (java.util.Map<String, Object>) userObj;
+                    Object idObj = userMap.get("id");
+                    userId = idObj != null ? String.valueOf(idObj) : null;
+                } else {
+                    userId = null;
+                }
+
+                // Get permissions list and convert to roles string
+                Object permissionsObj = claims.get("permission");
+                final String roles;
+                if (permissionsObj instanceof java.util.List) {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<String> permissions = (java.util.List<String>) permissionsObj;
+                    roles = String.join(",", permissions);
+                } else {
+                    roles = "";
+                }
 
                 // *** CHECK BLACKLIST TRƯỚC KHI CHO REQUEST ĐI QUA ***
                 return tokenBlacklistService.isAccessTokenBlacklisted(token)

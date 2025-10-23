@@ -26,6 +26,7 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
 import lombok.RequiredArgsConstructor;
+import vn.hoidanit.authservice.filter.GatewayAuthenticationFilter;
 import vn.hoidanit.authservice.util.SecurityUtil;
 
 @Configuration
@@ -37,6 +38,7 @@ public class SecurityConfiguration {
     private String jwtKey;
 
     private final JwtTokenBlacklistFilter jwtTokenBlacklistFilter;
+    private final GatewayAuthenticationFilter gatewayAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -49,13 +51,15 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers("/", "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // *** THÊM GATEWAY FILTER TRƯỚC để bypass JWT validation cho request từ Gateway ***
+                .addFilterBefore(gatewayAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 // *** THÊM BLACKLIST FILTER SAU KHI JWT ĐÃ ĐƯỢC VALIDATE ***
                 .addFilterAfter(jwtTokenBlacklistFilter, BearerTokenAuthenticationFilter.class);
 

@@ -39,6 +39,9 @@ public class AuthController {
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
+    @Value("${hoidanit.jwt.cookie-secure}")
+    private boolean cookieSecure;
+
     @PostMapping("/login")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
         log.info("=== LOGIN ATTEMPT START ===");
@@ -90,7 +93,7 @@ public class AuthController {
             // Set cookie
             ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
                     .httpOnly(true)
-                    .secure(true)
+                    .secure(cookieSecure)  // Read from application.yml
                     .path("/")
                     .maxAge(refreshTokenExpiration)
                     .build();

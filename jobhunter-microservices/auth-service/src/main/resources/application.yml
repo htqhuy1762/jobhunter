@@ -7,9 +7,9 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST:localhost}
+      host: ${SPRING_REDIS_HOST:jobhunter-redis}
       port: ${SPRING_REDIS_PORT:6379}
-      password: ${SPRING_REDIS_PASSWORD:}
+      password: ${SPRING_REDIS_PASSWORD:}  # Empty for local Redis without password
       timeout: 2000ms
       lettuce:
         pool:
@@ -18,7 +18,7 @@ spring:
           min-idle: 0
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://jobhunter-mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -35,7 +35,7 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -56,6 +56,12 @@ logging:
     vn.hoidanit.authservice: DEBUG
   file:
     name: logs/auth-service.log
+
+# Gateway Security - MUST match with API Gateway secret
+gateway:
+  signature:
+    secret: ${GATEWAY_SIGNATURE_SECRET:your-super-secret-gateway-signature-key-change-in-production-123456789}
+    enabled: true
 
 # JWT Configuration
 hoidanit:
