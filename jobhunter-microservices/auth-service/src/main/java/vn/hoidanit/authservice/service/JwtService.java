@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.authservice.domain.dto.ResLoginDTO;
+import vn.hoidanit.authservice.util.SecurityUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,6 @@ public class JwtService {
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
     /**
      * Create Access Token (15 minutes)
@@ -78,7 +78,7 @@ public class JwtService {
                 .claim("permission", listAuthority)
                 .build();
 
-        JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
+        JwsHeader jwsHeader = JwsHeader.with(SecurityUtil.JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
@@ -101,7 +101,7 @@ public class JwtService {
                 .claim("user", userToken)
                 .build();
 
-        JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
+        JwsHeader jwsHeader = JwsHeader.with(SecurityUtil.JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
@@ -111,7 +111,7 @@ public class JwtService {
 
     public Jwt decodeToken(String token) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
-                .macAlgorithm(JWT_ALGORITHM).build();
+                .macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
         try {
             return jwtDecoder.decode(token);
         } catch (Exception e) {
@@ -121,7 +121,7 @@ public class JwtService {
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(jwtKey);
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
+        return new SecretKeySpec(keyBytes, 0, keyBytes.length, SecurityUtil.JWT_ALGORITHM.getName());
     }
 }
 

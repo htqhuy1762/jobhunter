@@ -23,7 +23,6 @@ import org.springframework.security.oauth2.server.resource.web.authentication.Be
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.nimbusds.jose.util.Base64;
 
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.authservice.filter.GatewayAuthenticationFilter;
@@ -91,7 +90,7 @@ public class SecurityConfiguration {
     }
 
     private SecretKey getSecretKey() {
-        byte[] keyBytes = Base64.from(jwtKey).decode();
+        byte[] keyBytes = java.util.Base64.getDecoder().decode(jwtKey);
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, SecurityUtil.JWT_ALGORITHM.getName());
     }
 }

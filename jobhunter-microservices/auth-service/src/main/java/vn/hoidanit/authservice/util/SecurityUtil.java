@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 public class SecurityUtil {
 
     public static final String AUTHORITIES_KEY = "permission";
-    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
+    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
     /**
      * Get current logged in user's email

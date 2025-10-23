@@ -7,8 +7,8 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST:jobhunter-redis}
-      port: ${SPRING_REDIS_PORT:6379}
+      host: ${SPRING_DATA_REDIS_HOST:jobhunter-redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_REDIS_PASSWORD:}  # Empty for local Redis without password
       timeout: 2000ms
       lettuce:

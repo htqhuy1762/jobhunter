@@ -38,12 +38,9 @@ dependencies {
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")
 
-    // JWT
+    // JWT - Spring Security OAuth2 (includes Nimbus)
     implementation("org.springframework.security:spring-security-oauth2-resource-server")
     implementation("org.springframework.security:spring-security-oauth2-jose")
-    implementation("io.jsonwebtoken:jjwt-api:0.12.3")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
 
     // Monitoring
     implementation("io.micrometer:micrometer-registry-prometheus")

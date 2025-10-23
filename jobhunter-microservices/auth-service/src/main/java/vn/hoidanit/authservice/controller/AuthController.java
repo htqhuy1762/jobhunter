@@ -179,7 +179,7 @@ public class AuthController {
         // Set new cookie
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", newRefreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)  // Use configurable value
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();
@@ -217,7 +217,7 @@ public class AuthController {
         ResponseCookie deleteSpringCookie = ResponseCookie
                 .from("refresh_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)  // Use configurable value
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -254,7 +254,7 @@ public class AuthController {
 
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)  // Use configurable value
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();

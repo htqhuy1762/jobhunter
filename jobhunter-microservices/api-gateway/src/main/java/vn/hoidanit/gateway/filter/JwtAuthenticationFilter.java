@@ -1,6 +1,5 @@
 package vn.hoidanit.gateway.filter;
 
-import com.nimbusds.jose.util.Base64;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -19,6 +18,7 @@ import vn.hoidanit.gateway.service.TokenBlacklistService;
 import vn.hoidanit.gateway.util.SignatureUtil;
 
 import javax.crypto.SecretKey;
+import java.util.Base64;
 
 @Component
 @Slf4j
@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String token = authHeader.substring(7);
 
             try {
-                byte[] keyBytes = Base64.from(jwtSecret).decode();
+                byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
                 SecretKey key = Keys.hmacShaKeyFor(keyBytes);
                 Claims claims = Jwts.parser()
                         .verifyWith(key)
