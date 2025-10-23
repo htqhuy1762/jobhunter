@@ -190,33 +190,30 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
 
-        // *** BLACKLIST ACCESS TOKEN ***
-        // Lấy Access Token từ SecurityContext
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            String accessToken = jwt.getTokenValue();
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7);
 
-            // Tính thời gian còn lại của token (để set TTL cho blacklist)
-            long expiresAt = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0;
-            long now = java.time.Instant.now().getEpochSecond();
-            long remainingTime = expiresAt - now;
+            try {
+                Jwt jwt = this.jwtService.decodeToken(accessToken);
+                long expiresAt = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0;
+                long now = java.time.Instant.now().getEpochSecond();
+                long remainingTime = expiresAt - now;
 
-            // Chỉ blacklist nếu token còn thời gian sống
-            if (remainingTime > 0) {
-                this.tokenService.blacklistAccessToken(accessToken, email, remainingTime);
-                log.info("Blacklisted access token for user: {} with remaining time: {}s", email, remainingTime);
+                if (remainingTime > 0) {
+                    this.tokenService.blacklistAccessToken(accessToken, email, remainingTime);
+                    log.info("Blacklisted access token for user: {} with remaining time: {}s", email, remainingTime);
+                }
+            } catch (Exception e) {
+                log.warn("Could not blacklist access token for user: {}", email);
             }
         }
 
-        // *** XÓA REFRESH TOKEN KHI LOGOUT ***
         this.tokenService.deleteRefreshToken(email);
         log.info("User logged out, deleted refresh token: {}", email);
 
-        // Clear cookie
         ResponseCookie deleteSpringCookie = ResponseCookie
                 .from("refresh_token", "")
                 .httpOnly(true)

@@ -5,9 +5,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-/**
- * Utility class for Gateway Signature generation and verification
- */
 public class SignatureUtil {
 
     private static final String HMAC_SHA256 = "HmacSHA256";

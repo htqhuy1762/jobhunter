@@ -37,7 +37,6 @@ public class SecurityConfiguration {
     @Value("${hoidanit.jwt.base64-secret}")
     private String jwtKey;
 
-    private final JwtTokenBlacklistFilter jwtTokenBlacklistFilter;
     private final GatewayAuthenticationFilter gatewayAuthenticationFilter;
 
     @Bean
@@ -55,13 +54,9 @@ public class SecurityConfiguration {
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // *** THÊM GATEWAY FILTER TRƯỚC để bypass JWT validation cho request từ Gateway ***
-                .addFilterBefore(gatewayAuthenticationFilter, BearerTokenAuthenticationFilter.class)
-                // *** THÊM BLACKLIST FILTER SAU KHI JWT ĐÃ ĐƯỢC VALIDATE ***
-                .addFilterAfter(jwtTokenBlacklistFilter, BearerTokenAuthenticationFilter.class);
+                .addFilterBefore(gatewayAuthenticationFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }

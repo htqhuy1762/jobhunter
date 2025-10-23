@@ -5,16 +5,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-/**
- * Utility class for Gateway Signature generation and verification
- */
 public class SignatureUtil {
 
     private static final String HMAC_SHA256 = "HmacSHA256";
 
-    /**
-     * Create signature data string from user info and timestamp
-     */
     public static String createSignatureData(String userId, String userEmail, long timestamp) {
         return String.format("%s:%s:%d",
             userId != null ? userId : "",
@@ -22,9 +16,6 @@ public class SignatureUtil {
             timestamp);
     }
 
-    /**
-     * Generate HMAC-SHA256 signature
-     */
     public static String generateSignature(String data, String secret) {
         try {
             Mac mac = Mac.getInstance(HMAC_SHA256);
@@ -37,9 +28,6 @@ public class SignatureUtil {
         }
     }
 
-    /**
-     * Verify signature
-     */
     public static boolean verifySignature(String data, String signature, String secret) {
         String expectedSignature = generateSignature(data, secret);
         return expectedSignature.equals(signature);

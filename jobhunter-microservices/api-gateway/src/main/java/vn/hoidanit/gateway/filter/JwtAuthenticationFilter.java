@@ -26,9 +26,9 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
     @Value("${hoidanit.jwt.base64-secret}")
     private String jwtSecret;
+
     @Value("${gateway.signature.secret}")
     private String gatewaySignatureSecret;
-
 
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -41,8 +41,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-
-            // Extract JWT token from Authorization header
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -52,7 +50,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String token = authHeader.substring(7);
 
             try {
-                // Validate JWT token - decode Base64 secret EXACTLY like auth-service does
                 byte[] keyBytes = Base64.from(jwtSecret).decode();
                 SecretKey key = Keys.hmacShaKeyFor(keyBytes);
                 Claims claims = Jwts.parser()
@@ -61,11 +58,9 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                         .parseSignedClaims(token)
                         .getPayload();
 
-                // Extract user information from claims (auth-service structure)
-                final String email = claims.getSubject(); // subject is email
+                final String email = claims.getSubject();
                 Object userObj = claims.get("user");
 
-                // Extract userId from user object
                 final String userId;
                 if (userObj instanceof java.util.Map) {
                     @SuppressWarnings("unchecked")
@@ -76,7 +71,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                     userId = null;
                 }
 
-                // Get permissions list and convert to roles string
                 Object permissionsObj = claims.get("permission");
                 final String roles;
                 if (permissionsObj instanceof java.util.List) {
@@ -87,33 +81,26 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                     roles = "";
                 }
 
-                // *** CHECK BLACKLIST TRƯỚC KHI CHO REQUEST ĐI QUA ***
                 return tokenBlacklistService.isAccessTokenBlacklisted(token)
                         .flatMap(isBlacklisted -> {
                             if (Boolean.TRUE.equals(isBlacklisted)) {
-                                log.warn("Token is blacklisted for user: {}", email);
+                                log.warn("Token is blacklisted: {}", email);
                                 return onError(exchange, "Token has been revoked. Please login again.", HttpStatus.UNAUTHORIZED);
                             }
 
-                            // Token hợp lệ và không bị blacklist
-                            // Generate Gateway Signature to prove request comes from Gateway
                             long timestamp = System.currentTimeMillis();
                             String signatureData = SignatureUtil.createSignatureData(userId, email, timestamp);
                             String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
                             
-                            // Add user context to request headers for downstream services
                             ServerHttpRequest modifiedRequest = request.mutate()
                                     .header("X-User-Id", userId)
                                     .header("X-User-Email", email)
                                     .header("X-User-Roles", roles)
-                                    // ✅ SECURITY: Add Gateway signature to verify request origin
                                     .header("X-Gateway-Signature", signature)
                                     .header("X-Gateway-Timestamp", String.valueOf(timestamp))
                                     .build();
 
-                            log.info("JWT validated for user: {} with roles: {}", email, roles);
-                            log.debug("Gateway signature added for security verification");
-
+                            log.info("JWT validated for user: {} (roles: {})", email, roles);
                             return chain.filter(exchange.mutate().request(modifiedRequest).build());
                         });
 
@@ -132,7 +119,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     }
 
     public static class Config {
-        // Configuration properties if needed
     }
 }
 

@@ -12,10 +12,6 @@ import vn.hoidanit.companyservice.util.SignatureUtil;
 
 import java.io.IOException;
 
-/**
- * Filter to verify Gateway Signature
- * Ensures requests come from API Gateway, not direct bypass
- */
 @Component
 @Slf4j
 public class GatewaySignatureFilter extends OncePerRequestFilter {
@@ -38,56 +34,48 @@ public class GatewaySignatureFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Skip signature check if disabled (for local development)
         if (!signatureEnabled) {
-            log.debug("Gateway signature verification is disabled");
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Get signature from header
         String signature = request.getHeader(HEADER_SIGNATURE);
         String timestampStr = request.getHeader(HEADER_TIMESTAMP);
         String userId = request.getHeader(HEADER_USER_ID);
         String userEmail = request.getHeader(HEADER_USER_EMAIL);
 
-        // Verify signature exists
         if (signature == null || timestampStr == null) {
-            log.warn("Request missing gateway signature or timestamp. Path: {}", request.getRequestURI());
+            log.warn("Missing gateway signature/timestamp. Path: {}", request.getRequestURI());
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Direct access not allowed. Request must go through API Gateway.\"}");
+            response.getWriter().write("{\"error\":\"Direct access not allowed. Must go through API Gateway.\"}");
             return;
         }
 
         try {
-            // Parse timestamp
             long timestamp = Long.parseLong(timestampStr);
             long currentTime = System.currentTimeMillis();
 
-            // Check timestamp validity (prevent replay attacks)
             if (Math.abs(currentTime - timestamp) > timestampToleranceSeconds * 1000) {
-                log.warn("Gateway signature timestamp expired. Path: {}", request.getRequestURI());
+                log.warn("Timestamp expired. Path: {}", request.getRequestURI());
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Request timestamp expired\"}");
                 return;
             }
 
-            // Verify signature
             String signatureData = SignatureUtil.createSignatureData(userId, userEmail, timestamp);
             String expectedSignature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
             if (!signature.equals(expectedSignature)) {
-                log.warn("Invalid gateway signature. Path: {}, Expected: {}, Got: {}",
-                        request.getRequestURI(), expectedSignature, signature);
+                log.warn("Invalid signature. Path: {}", request.getRequestURI());
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Invalid gateway signature\"}");
                 return;
             }
 
-            log.debug("Gateway signature verified successfully for user: {}", userEmail);
+            log.debug("Gateway verified for user: {}", userEmail);
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
@@ -100,8 +88,8 @@ public class GatewaySignatureFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Skip filter for actuator endpoints
         String path = request.getRequestURI();
         return path.startsWith("/actuator/");
     }
 }
+

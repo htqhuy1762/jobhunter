@@ -50,16 +50,18 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
             String expectedSignature = generateSignature(signatureData, gatewaySignatureSecret);
 
             if (gatewaySignature.equals(expectedSignature)) {
-                // Signature valid - trust Gateway authentication
                 log.debug("Gateway signature validated successfully for user: {}", userEmail);
 
-                // Create Spring Security Authentication from Gateway headers
                 List<SimpleGrantedAuthority> authorities = parseAuthorities(userRoles);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.info("User authenticated via Gateway: {} with roles: {}", userEmail, userRoles);
+
+                // Skip remaining filters (including JWT validation) - trust Gateway
+                filterChain.doFilter(request, response);
+                return;
             } else {
                 log.error("Invalid Gateway signature! Request rejected.");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -68,12 +70,12 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Continue filter chain
+        // Continue filter chain for other requests (direct calls with JWT)
         filterChain.doFilter(request, response);
     }
 
     private String createSignatureData(String userId, String email, String timestamp) {
-        return userId + "|" + email + "|" + timestamp;
+        return userId + ":" + email + ":" + timestamp;
     }
 
     private String generateSignature(String data, String secret) {
@@ -82,14 +84,7 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
             SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             sha256Hmac.init(secretKey);
             byte[] hash = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
+            return java.util.Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate signature", e);
         }

@@ -105,16 +105,17 @@ public class JwtService {
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
-    /**
-     * Decode JWT token
-     */
     public Jwt checkValidRefreshToken(String token) {
+        return decodeToken(token);
+    }
+
+    public Jwt decodeToken(String token) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
                 .macAlgorithm(JWT_ALGORITHM).build();
         try {
             return jwtDecoder.decode(token);
         } catch (Exception e) {
-            throw new RuntimeException("Refresh token invalid");
+            throw new RuntimeException("Token invalid");
         }
     }
 
