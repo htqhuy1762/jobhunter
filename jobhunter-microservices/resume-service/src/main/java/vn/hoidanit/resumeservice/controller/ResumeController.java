@@ -20,6 +20,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.resumeservice.domain.Resume;
+import vn.hoidanit.resumeservice.domain.response.RestResponse;
 import vn.hoidanit.resumeservice.dto.ResCreateResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResFetchResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResUpdateResumeDTO;
@@ -33,7 +34,7 @@ public class ResumeController {
     private final ResumeService resumeService;
 
     @PostMapping("/resumes")
-    public ResponseEntity<ResCreateResumeDTO> create(@Valid @RequestBody Resume resume) {
+    public ResponseEntity<RestResponse<ResCreateResumeDTO>> create(@Valid @RequestBody Resume resume) {
         // Check id exists
         boolean isIdExist = this.resumeService.checkResumeExistByUserAndJob(resume);
         if(!isIdExist) {
@@ -41,11 +42,12 @@ public class ResumeController {
         }
 
         // Create resume
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.resumeService.create(resume));
+        ResCreateResumeDTO createdResume = this.resumeService.create(resume);
+        return RestResponse.created(createdResume, "Create resume successfully");
     }
 
     @PutMapping("/resumes")
-    public ResponseEntity<ResUpdateResumeDTO> update(@RequestBody Resume resume) {
+    public ResponseEntity<RestResponse<ResUpdateResumeDTO>> update(@RequestBody Resume resume) {
         // check id exists
         Optional<Resume> resumeOptional = this.resumeService.fetchById(resume.getId());
         if(resumeOptional.isEmpty()) {
@@ -55,40 +57,44 @@ public class ResumeController {
         Resume reqResume = resumeOptional.get();
         reqResume.setStatus(resume.getStatus());
 
-        return ResponseEntity.ok().body(this.resumeService.update(reqResume));
+        ResUpdateResumeDTO updatedResume = this.resumeService.update(reqResume);
+        return RestResponse.ok(updatedResume, "Update resume successfully");
     }
 
     @DeleteMapping("/resumes/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Optional<Resume> resumeOptional = this.resumeService.fetchById(id);
         if(resumeOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         this.resumeService.delete(id);
-        return ResponseEntity.noContent().build();
+        return RestResponse.ok(null, "Delete resume successfully");
     }
 
     @GetMapping("/resumes/{id}")
-    public ResponseEntity<ResFetchResumeDTO> fetchById(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<ResFetchResumeDTO>> fetchById(@PathVariable("id") long id) {
         Optional<Resume> resumeOptional = this.resumeService.fetchById(id);
         if(resumeOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok().body(this.resumeService.getResume(resumeOptional.get()));
+        ResFetchResumeDTO resumeDTO = this.resumeService.getResume(resumeOptional.get());
+        return RestResponse.ok(resumeDTO, "Fetch resume by id successfully");
     }
 
     @GetMapping("/resumes")
-    public ResponseEntity<ResultPaginationDTO> fetchAll(
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchAll(
             @Filter Specification<Resume> spec,
             Pageable pageable) {
-        return ResponseEntity.ok().body(this.resumeService.fetchAllResume(spec, pageable));
+        ResultPaginationDTO result = this.resumeService.fetchAllResume(spec, pageable);
+        return RestResponse.ok(result, "Fetch resumes successfully");
     }
 
     @GetMapping("/resumes/by-user")
-    public ResponseEntity<ResultPaginationDTO> fetchByUser(Pageable pageable) {
-        return ResponseEntity.ok().body(this.resumeService.fetchAllResumeByUser(pageable));
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchByUser(Pageable pageable) {
+        ResultPaginationDTO result = this.resumeService.fetchAllResumeByUser(pageable);
+        return RestResponse.ok(result, "Fetch resumes by user successfully");
     }
 }
 

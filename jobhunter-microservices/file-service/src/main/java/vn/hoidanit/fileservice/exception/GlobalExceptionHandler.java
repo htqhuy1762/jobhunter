@@ -1,4 +1,4 @@
-package vn.hoidanit.jobservice.exception;
+package vn.hoidanit.fileservice.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
-import vn.hoidanit.jobservice.domain.response.RestResponse;
+import vn.hoidanit.fileservice.domain.response.RestResponse;
 
 @RestControllerAdvice
 @Slf4j
@@ -39,4 +39,3 @@ public class GlobalExceptionHandler {
         return RestResponse.error(HttpStatus.NOT_FOUND, "Resource not found");
     }
 }
-

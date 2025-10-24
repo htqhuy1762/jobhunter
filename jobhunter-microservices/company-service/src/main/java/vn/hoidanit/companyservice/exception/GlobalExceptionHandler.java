@@ -1,50 +1,42 @@
 package vn.hoidanit.companyservice.exception;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import vn.hoidanit.companyservice.util.SecurityUtil;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import vn.hoidanit.companyservice.domain.response.RestResponse;
 
-/**
- * Global exception handler for the application
- */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<Map<String, Object>> handleForbiddenException(ForbiddenException ex) {
-        log.warn("Forbidden access attempt by user: {} - {}",
-                SecurityUtil.getCurrentUserInfo(), ex.getMessage());
-
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", Instant.now());
-        error.put("status", HttpStatus.FORBIDDEN.value());
-        error.put("error", "Forbidden");
-        error.put("message", ex.getMessage());
-        error.put("path", ""); // Can be enhanced with request path
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
+        log.error("Exception: ", ex);
+        return RestResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
-        log.error("Unexpected error occurred", ex);
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<RestResponse<Object>> handleRuntimeException(RuntimeException ex) {
+        log.error("RuntimeException: ", ex);
+        return RestResponse.error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", Instant.now());
-        error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        error.put("error", "Internal Server Error");
-        error.put("message", "An unexpected error occurred");
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<RestResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        log.error("Validation error: ", ex);
+        String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        return RestResponse.error(HttpStatus.BAD_REQUEST, errorMessage);
+    }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<RestResponse<Object>> handleNotFoundException(NoResourceFoundException ex) {
+        log.error("Resource not found: ", ex);
+        return RestResponse.error(HttpStatus.NOT_FOUND, "Resource not found");
     }
 }
-
 

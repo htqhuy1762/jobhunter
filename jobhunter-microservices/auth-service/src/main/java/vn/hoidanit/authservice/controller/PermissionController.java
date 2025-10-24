@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.authservice.domain.Permission;
 import vn.hoidanit.authservice.domain.dto.ResultPaginationDTO;
+import vn.hoidanit.authservice.domain.response.RestResponse;
 import vn.hoidanit.authservice.service.PermissionService;
 
 @RestController
@@ -20,16 +21,17 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @PostMapping
-    public ResponseEntity<Permission> create(@Valid @RequestBody Permission permission) {
+    public ResponseEntity<RestResponse<Permission>> create(@Valid @RequestBody Permission permission) {
         if (this.permissionService.isPermissionExist(permission)) {
             throw new RuntimeException("Permission đã tồn tại");
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.permissionService.create(permission));
+        Permission createdPermission = this.permissionService.create(permission);
+        return RestResponse.created(createdPermission, "Create permission successfully");
     }
 
     @PutMapping
-    public ResponseEntity<Permission> update(@Valid @RequestBody Permission permission) {
+    public ResponseEntity<RestResponse<Permission>> update(@Valid @RequestBody Permission permission) {
         if (this.permissionService.fetchById(permission.getId()) == null) {
             throw new RuntimeException("Permission với id = " + permission.getId() + " không tồn tại");
         }
@@ -38,31 +40,33 @@ public class PermissionController {
             throw new RuntimeException("Permission đã tồn tại");
         }
 
-        return ResponseEntity.ok(this.permissionService.update(permission));
+        Permission updatedPermission = this.permissionService.update(permission);
+        return RestResponse.ok(updatedPermission, "Update permission successfully");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         if (this.permissionService.fetchById(id) == null) {
             throw new RuntimeException("Permission với id = " + id + " không tồn tại");
         }
         this.permissionService.delete(id);
-        return ResponseEntity.ok(null);
+        return RestResponse.ok(null, "Delete permission successfully");
     }
 
     @GetMapping
-    public ResponseEntity<ResultPaginationDTO> getPermissions(
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getPermissions(
             Specification<Permission> spec,
             Pageable pageable) {
-        return ResponseEntity.ok(this.permissionService.getPermissions(spec, pageable));
+        ResultPaginationDTO result = this.permissionService.getPermissions(spec, pageable);
+        return RestResponse.ok(result, "Fetch permissions successfully");
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Permission> getById(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Permission>> getById(@PathVariable("id") long id) {
         Permission permission = this.permissionService.fetchById(id);
         if (permission == null) {
             throw new RuntimeException("Permission với id = " + id + " không tồn tại");
         }
-        return ResponseEntity.ok(permission);
+        return RestResponse.ok(permission, "Fetch permission by id successfully");
     }
 }

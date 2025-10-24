@@ -20,6 +20,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobservice.domain.Job;
+import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
@@ -32,43 +33,46 @@ public class JobController {
     private final JobService jobService;
 
     @PostMapping("/jobs")
-    public ResponseEntity<ResCreateJobDTO> create(@Valid @RequestBody Job job) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.jobService.create(job));
+    public ResponseEntity<RestResponse<ResCreateJobDTO>> create(@Valid @RequestBody Job job) {
+        ResCreateJobDTO createdJob = this.jobService.create(job);
+        return RestResponse.created(createdJob, "Create job successfully");
     }
 
     @PutMapping("/jobs")
-    public ResponseEntity<ResUpdateJobDTO> update(@Valid @RequestBody Job job) {
+    public ResponseEntity<RestResponse<ResUpdateJobDTO>> update(@Valid @RequestBody Job job) {
         Optional<Job> currentJob = this.jobService.fetchJobById(job.getId());
         if(!currentJob.isPresent()) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok().body(this.jobService.update(job, currentJob.get()));
+        ResUpdateJobDTO updatedJob = this.jobService.update(job, currentJob.get());
+        return RestResponse.ok(updatedJob, "Update job successfully");
     }
 
     @DeleteMapping("/jobs/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Optional<Job> currentJob = this.jobService.fetchJobById(id);
         if(!currentJob.isPresent()) {
             return ResponseEntity.notFound().build();
         }
 
         this.jobService.delete(id);
-        return ResponseEntity.noContent().build();
+        return RestResponse.ok(null, "Delete job successfully");
     }
 
     @GetMapping("/jobs/{id}")
-    public ResponseEntity<Job> getJobById(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Job>> getJobById(@PathVariable("id") long id) {
         Optional<Job> currentJob = this.jobService.fetchJobById(id);
         if(!currentJob.isPresent()) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok().body(currentJob.get());
+        return RestResponse.ok(currentJob.get(), "Fetch job by id successfully");
     }
 
     @GetMapping("/jobs")
-    public ResponseEntity<ResultPaginationDTO> getAllJob(@Filter Specification<Job> spec, Pageable pageable) {
-        return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable));
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getAllJob(@Filter Specification<Job> spec, Pageable pageable) {
+        ResultPaginationDTO result = this.jobService.fetchAll(spec, pageable);
+        return RestResponse.ok(result, "Fetch jobs successfully");
     }
 }

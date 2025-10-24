@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.authservice.domain.Role;
 import vn.hoidanit.authservice.domain.dto.ResultPaginationDTO;
+import vn.hoidanit.authservice.domain.response.RestResponse;
 import vn.hoidanit.authservice.service.RoleService;
 
 @RestController
@@ -20,45 +21,48 @@ public class RoleController {
     private final RoleService roleService;
 
     @PostMapping
-    public ResponseEntity<Role> create(@Valid @RequestBody Role role) {
+    public ResponseEntity<RestResponse<Role>> create(@Valid @RequestBody Role role) {
         if (this.roleService.existByName(role.getName())) {
             throw new RuntimeException("Role với name = " + role.getName() + " đã tồn tại");
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.roleService.create(role));
+        Role createdRole = this.roleService.create(role);
+        return RestResponse.created(createdRole, "Create role successfully");
     }
 
     @PutMapping
-    public ResponseEntity<Role> update(@Valid @RequestBody Role role) {
+    public ResponseEntity<RestResponse<Role>> update(@Valid @RequestBody Role role) {
         if (this.roleService.fetchById(role.getId()) == null) {
             throw new RuntimeException("Role với id = " + role.getId() + " không tồn tại");
         }
 
-        return ResponseEntity.ok(this.roleService.update(role));
+        Role updatedRole = this.roleService.update(role);
+        return RestResponse.ok(updatedRole, "Update role successfully");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         if (this.roleService.fetchById(id) == null) {
             throw new RuntimeException("Role với id = " + id + " không tồn tại");
         }
         this.roleService.delete(id);
-        return ResponseEntity.ok(null);
+        return RestResponse.ok(null, "Delete role successfully");
     }
 
     @GetMapping
-    public ResponseEntity<ResultPaginationDTO> getRoles(
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getRoles(
             Specification<Role> spec,
             Pageable pageable) {
-        return ResponseEntity.ok(this.roleService.getRoles(spec, pageable));
+        ResultPaginationDTO result = this.roleService.getRoles(spec, pageable);
+        return RestResponse.ok(result, "Fetch roles successfully");
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Role> getById(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Role>> getById(@PathVariable("id") long id) {
         Role role = this.roleService.fetchById(id);
         if (role == null) {
             throw new RuntimeException("Role với id = " + id + " không tồn tại");
         }
-        return ResponseEntity.ok(role);
+        return RestResponse.ok(role, "Fetch role by id successfully");
     }
 }

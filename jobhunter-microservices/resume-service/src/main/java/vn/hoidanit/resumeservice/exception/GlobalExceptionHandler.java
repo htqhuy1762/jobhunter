@@ -1,4 +1,4 @@
-package vn.hoidanit.jobservice.exception;
+package vn.hoidanit.resumeservice.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
-import vn.hoidanit.jobservice.domain.response.RestResponse;
+import vn.hoidanit.resumeservice.domain.response.RestResponse;
 
 @RestControllerAdvice
 @Slf4j

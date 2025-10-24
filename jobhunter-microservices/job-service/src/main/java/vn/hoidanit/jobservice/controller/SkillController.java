@@ -18,6 +18,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobservice.domain.Skill;
+import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
 import vn.hoidanit.jobservice.service.SkillService;
 
@@ -28,15 +29,17 @@ public class SkillController {
     private final SkillService skillService;
 
     @PostMapping("/skills")
-    public ResponseEntity<Skill> create(@Valid @RequestBody Skill skill) {
+    public ResponseEntity<RestResponse<Skill>> create(@Valid @RequestBody Skill skill) {
         if (skill.getName() != null && this.skillService.isNameExist(skill.getName())) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.skillService.createSkill(skill));
+
+        Skill createdSkill = this.skillService.createSkill(skill);
+        return RestResponse.created(createdSkill, "Create skill successfully");
     }
 
     @PutMapping("/skills")
-    public ResponseEntity<Skill> update(@Valid @RequestBody Skill skill) {
+    public ResponseEntity<RestResponse<Skill>> update(@Valid @RequestBody Skill skill) {
         Skill currentSkill = this.skillService.fetchSkillById(skill.getId());
 
         if (currentSkill == null) {
@@ -48,23 +51,25 @@ public class SkillController {
         }
 
         currentSkill.setName(skill.getName());
-        return ResponseEntity.ok().body(this.skillService.updateSkill(currentSkill));
+        Skill updatedSkill = this.skillService.updateSkill(currentSkill);
+        return RestResponse.ok(updatedSkill, "Update skill successfully");
     }
 
     @GetMapping("/skills")
-    public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Skill> spec, Pageable pageable)  {
-        return ResponseEntity.status(HttpStatus.OK).body(this.skillService.fetchAllSkills(spec, pageable));
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getAll(@Filter Specification<Skill> spec, Pageable pageable)  {
+        ResultPaginationDTO result = this.skillService.fetchAllSkills(spec, pageable);
+        return RestResponse.ok(result, "Fetch skills successfully");
     }
 
     @DeleteMapping("/skills/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Skill currSkill = this.skillService.fetchSkillById(id);
         if(currSkill == null) {
             return ResponseEntity.notFound().build();
         }
 
         this.skillService.deleteSkill(id);
-        return ResponseEntity.noContent().build();
+        return RestResponse.ok(null, "Delete skill successfully");
     }
 }
 

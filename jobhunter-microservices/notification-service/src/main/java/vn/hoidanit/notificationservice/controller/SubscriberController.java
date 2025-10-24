@@ -18,6 +18,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.notificationservice.domain.Subscriber;
+import vn.hoidanit.notificationservice.domain.response.RestResponse;
 import vn.hoidanit.notificationservice.service.SubscriberService;
 
 @RestController
@@ -27,53 +28,57 @@ public class SubscriberController {
     private final SubscriberService subscriberService;
 
     @PostMapping("/subscribers")
-    public ResponseEntity<Subscriber> create(@Valid @RequestBody Subscriber subscriber) {
+    public ResponseEntity<RestResponse<Subscriber>> create(@Valid @RequestBody Subscriber subscriber) {
         // Check email exists
         if (this.subscriberService.isExistsByEmail(subscriber.getEmail())) {
             return ResponseEntity.badRequest().build();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.subscriberService.create(subscriber));
+        Subscriber createdSubscriber = this.subscriberService.create(subscriber);
+        return RestResponse.created(createdSubscriber, "Create subscriber successfully");
     }
 
     @PutMapping("/subscribers")
-    public ResponseEntity<Subscriber> update(@RequestBody Subscriber subscriber) {
+    public ResponseEntity<RestResponse<Subscriber>> update(@RequestBody Subscriber subscriber) {
         // Check exists
         Subscriber currentSubscriber = this.subscriberService.findById(subscriber.getId());
         if (currentSubscriber == null) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok().body(this.subscriberService.update(currentSubscriber, subscriber));
+        Subscriber updatedSubscriber = this.subscriberService.update(currentSubscriber, subscriber);
+        return RestResponse.ok(updatedSubscriber, "Update subscriber successfully");
     }
 
     @GetMapping("/subscribers/{id}")
-    public ResponseEntity<Subscriber> fetchById(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Subscriber>> fetchById(@PathVariable("id") long id) {
         Subscriber subscriber = this.subscriberService.findById(id);
         if (subscriber == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok().body(subscriber);
+
+        return RestResponse.ok(subscriber, "Fetch subscriber by id successfully");
     }
 
     @DeleteMapping("/subscribers/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
+    public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Subscriber subscriber = this.subscriberService.findById(id);
         if (subscriber == null) {
             return ResponseEntity.notFound().build();
         }
 
         this.subscriberService.delete(id);
-        return ResponseEntity.noContent().build();
+        return RestResponse.ok(null, "Delete subscriber successfully");
     }
 
     @GetMapping("/subscribers/by-email")
-    public ResponseEntity<Subscriber> fetchByEmail(String email) {
+    public ResponseEntity<RestResponse<Subscriber>> fetchByEmail(String email) {
         Subscriber subscriber = this.subscriberService.findByEmail(email);
         if (subscriber == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok().body(subscriber);
+
+        return RestResponse.ok(subscriber, "Fetch subscriber by email successfully");
     }
 }
 
