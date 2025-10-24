@@ -39,6 +39,13 @@ public class GatewaySignatureFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Allow public endpoints (GET requests) to bypass signature check
+        if ("GET".equalsIgnoreCase(request.getMethod())) {
+            log.debug("Bypassing signature check for GET request: {}", request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String signature = request.getHeader(HEADER_SIGNATURE);
         String timestampStr = request.getHeader(HEADER_TIMESTAMP);
         String userId = request.getHeader(HEADER_USER_ID);
