@@ -1,5 +1,7 @@
 package vn.hoidanit.notificationservice.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -17,13 +19,16 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.notificationservice.domain.Subscriber;
 import vn.hoidanit.notificationservice.domain.response.RestResponse;
 import vn.hoidanit.notificationservice.service.SubscriberService;
+import vn.hoidanit.notificationservice.util.SecurityUtil;
 
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Slf4j
 public class SubscriberController {
     private final SubscriberService subscriberService;
 
@@ -48,6 +53,23 @@ public class SubscriberController {
 
         Subscriber updatedSubscriber = this.subscriberService.update(currentSubscriber, subscriber);
         return RestResponse.ok(updatedSubscriber, "Update subscriber successfully");
+    }
+
+    @GetMapping("/subscribers/skills")
+    public ResponseEntity<RestResponse<List<Long>>> getSubscriberSkills() {
+        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        log.info("Fetching subscribed skills for user: {}", email);
+
+        Subscriber subscriber = this.subscriberService.findByEmail(email);
+
+        if (subscriber == null) {
+            log.warn("No subscriber found for user: {}", email);
+            return RestResponse.ok(List.of(), "No subscriber found for current user");
+        }
+
+        List<Long> skillIds = subscriber.getSkillIds() != null ? subscriber.getSkillIds() : List.of();
+        log.info("Found {} subscribed skills for user: {}", skillIds.size(), email);
+        return RestResponse.ok(skillIds, "Fetch subscriber skills successfully");
     }
 
     @GetMapping("/subscribers/{id}")
