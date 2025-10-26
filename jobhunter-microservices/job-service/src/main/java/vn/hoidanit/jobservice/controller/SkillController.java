@@ -17,6 +17,7 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import vn.hoidanit.jobservice.annotation.PageableDefault;
 import vn.hoidanit.jobservice.domain.Skill;
 import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
@@ -56,7 +57,10 @@ public class SkillController {
     }
 
     @GetMapping("/skills")
-    public ResponseEntity<RestResponse<ResultPaginationDTO>> getAll(@Filter Specification<Skill> spec, Pageable pageable)  {
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getAll(
+            @Filter Specification<Skill> spec,
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.skillService.fetchAllSkills(spec, pageable);
         return RestResponse.ok(result, "Fetch skills successfully");
     }

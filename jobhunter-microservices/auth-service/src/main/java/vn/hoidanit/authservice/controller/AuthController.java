@@ -45,8 +45,8 @@ public class AuthController {
     public ResponseEntity<RestResponse<ResLoginDTO>> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
         log.info("Login attempt for user: {}", loginDTO.getUsername());
 
-        // Check if user exists
-        User currentUserDB = this.userService.handleGetUserByUsername(loginDTO.getUsername());
+        // Check if user exists - LOAD WITH PERMISSIONS
+        User currentUserDB = this.userService.handleGetUserByUsernameWithPermissions(loginDTO.getUsername());
         if (currentUserDB == null) {
             log.error("Login failed: User not found - {}", loginDTO.getUsername());
             throw new RuntimeException("Invalid username or password");

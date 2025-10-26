@@ -2,12 +2,14 @@ package vn.hoidanit.authservice.controller;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import com.turkraft.springfilter.boot.Filter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import vn.hoidanit.authservice.annotation.PageableDefault;
 import vn.hoidanit.authservice.domain.Permission;
 import vn.hoidanit.authservice.domain.dto.ResultPaginationDTO;
 import vn.hoidanit.authservice.domain.response.RestResponse;
@@ -55,8 +57,9 @@ public class PermissionController {
 
     @GetMapping
     public ResponseEntity<RestResponse<ResultPaginationDTO>> getPermissions(
-            Specification<Permission> spec,
-            Pageable pageable) {
+            @Filter Specification<Permission> spec,
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.permissionService.getPermissions(spec, pageable);
         return RestResponse.ok(result, "Fetch permissions successfully");
     }

@@ -7,6 +7,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import vn.hoidanit.companyservice.annotation.PageableDefault;
 import vn.hoidanit.companyservice.annotation.RequireRole;
 import vn.hoidanit.companyservice.domain.Company;
 import vn.hoidanit.companyservice.domain.response.RestResponse;
@@ -50,7 +51,10 @@ public class CompanyController {
      * Get all companies - Public endpoint (no authentication required via Gateway)
      */
     @GetMapping
-    public ResponseEntity<RestResponse<ResultPaginationDTO>> getCompany(@Filter Specification<Company> spec, Pageable pageable) {
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getCompany(
+            @Filter Specification<Company> spec,
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.companyService.handleGetCompany(spec, pageable);
         return RestResponse.ok(result, "Fetch companies successfully");
     }

@@ -19,6 +19,7 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import vn.hoidanit.jobservice.annotation.PageableDefault;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
@@ -71,7 +72,10 @@ public class JobController {
     }
 
     @GetMapping("/jobs")
-    public ResponseEntity<RestResponse<ResultPaginationDTO>> getAllJob(@Filter Specification<Job> spec, Pageable pageable) {
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> getAllJob(
+            @Filter Specification<Job> spec,
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.jobService.fetchAll(spec, pageable);
         return RestResponse.ok(result, "Fetch jobs successfully");
     }

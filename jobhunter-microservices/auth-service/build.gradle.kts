@@ -35,6 +35,9 @@ dependencies {
     // Spring Cloud
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
 
+    // Spring Filter for dynamic querying
+    implementation("com.turkraft.springfilter:jpa:3.1.7")
+
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")
 

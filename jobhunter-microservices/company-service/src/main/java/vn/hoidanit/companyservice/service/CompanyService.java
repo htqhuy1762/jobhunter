@@ -30,7 +30,7 @@ public class CompanyService {
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 
-        mt.setPage(companies.getNumber() + 1);
+        mt.setPage(companies.getNumber() + 1); // Convert back to 1-based for response
         mt.setPageSize(companies.getSize());
         mt.setPages(companies.getTotalPages());
         mt.setTotal(companies.getTotalElements());

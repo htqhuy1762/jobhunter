@@ -19,6 +19,7 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import vn.hoidanit.resumeservice.annotation.PageableDefault;
 import vn.hoidanit.resumeservice.domain.Resume;
 import vn.hoidanit.resumeservice.domain.response.RestResponse;
 import vn.hoidanit.resumeservice.dto.ResCreateResumeDTO;
@@ -86,16 +87,18 @@ public class ResumeController {
     @GetMapping("/resumes")
     public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchAll(
             @Filter Specification<Resume> spec,
-            Pageable pageable) {
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.resumeService.fetchAllResume(spec, pageable);
         return RestResponse.ok(result, "Fetch resumes successfully");
     }
 
     @GetMapping("/resumes/by-user")
-    public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchByUser(Pageable pageable) {
+    public ResponseEntity<RestResponse<ResultPaginationDTO>> fetchByUser(
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.resumeService.fetchAllResumeByUser(pageable);
         return RestResponse.ok(result, "Fetch resumes by user successfully");
     }
 }
-
 

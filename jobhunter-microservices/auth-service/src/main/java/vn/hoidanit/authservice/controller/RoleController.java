@@ -2,12 +2,14 @@ package vn.hoidanit.authservice.controller;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import com.turkraft.springfilter.boot.Filter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import vn.hoidanit.authservice.annotation.PageableDefault;
 import vn.hoidanit.authservice.domain.Role;
 import vn.hoidanit.authservice.domain.dto.ResultPaginationDTO;
 import vn.hoidanit.authservice.domain.response.RestResponse;
@@ -51,8 +53,9 @@ public class RoleController {
 
     @GetMapping
     public ResponseEntity<RestResponse<ResultPaginationDTO>> getRoles(
-            Specification<Role> spec,
-            Pageable pageable) {
+            @Filter Specification<Role> spec,
+            @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
+
         ResultPaginationDTO result = this.roleService.getRoles(spec, pageable);
         return RestResponse.ok(result, "Fetch roles successfully");
     }

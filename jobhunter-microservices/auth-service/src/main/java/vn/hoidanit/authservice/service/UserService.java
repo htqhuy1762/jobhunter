@@ -93,6 +93,10 @@ public class UserService {
         return this.userRepository.findByEmail(email);
     }
 
+    public User handleGetUserByUsernameWithPermissions(String email) {
+        return this.userRepository.findByEmailWithRoleAndPermissions(email);
+    }
+
     public boolean isEmailExist(String email) {
         return this.userRepository.existsByEmail(email);
     }
