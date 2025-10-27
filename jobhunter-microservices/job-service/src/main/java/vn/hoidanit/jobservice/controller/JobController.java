@@ -62,13 +62,13 @@ public class JobController {
     }
 
     @GetMapping("/jobs/{id}")
-    public ResponseEntity<RestResponse<Job>> getJobById(@PathVariable("id") long id) {
-        Optional<Job> currentJob = this.jobService.fetchJobById(id);
-        if(!currentJob.isPresent()) {
+    public ResponseEntity<RestResponse<vn.hoidanit.jobservice.dto.ResJobDTO>> getJobById(@PathVariable("id") long id) {
+        vn.hoidanit.jobservice.dto.ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
+        if(jobDTO == null) {
             return ResponseEntity.notFound().build();
         }
 
-        return RestResponse.ok(currentJob.get(), "Fetch job by id successfully");
+        return RestResponse.ok(jobDTO, "Fetch job by id successfully");
     }
 
     @GetMapping("/jobs")

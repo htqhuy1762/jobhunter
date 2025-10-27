@@ -68,6 +68,17 @@ public class JobService {
         return this.jobRepository.findById(id);
     }
 
+    /**
+     * Fetch job by ID with company information for display
+     */
+    public vn.hoidanit.jobservice.dto.ResJobDTO fetchJobByIdWithCompany(long id) {
+        Optional<Job> jobOptional = this.jobRepository.findById(id);
+        if (!jobOptional.isPresent()) {
+            return null;
+        }
+        return convertToResJobDTO(jobOptional.get());
+    }
+
     public ResUpdateJobDTO update(Job j, Job jobInDB) {
         // check skills
         if(j.getSkills() != null) {
