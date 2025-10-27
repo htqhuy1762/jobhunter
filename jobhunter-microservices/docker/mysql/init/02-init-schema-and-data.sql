@@ -73,16 +73,16 @@ INSERT INTO roles (name, description, active, created_by) VALUES
 ('ROLE_HR', 'HR manager', TRUE, 'system')
 ON DUPLICATE KEY UPDATE name=name;
 
--- Insert default users
--- Password for all: 123456 (BCrypt hash)
-INSERT INTO users (email, password, name, age, gender, address, role_id, created_by) VALUES
-('admin@gmail.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2W69IH.UU8.MSVMLUKKdLNq', 'Admin User', 30, 'MALE', 'Hanoi, Vietnam',
-    (SELECT id FROM roles WHERE name = 'ROLE_ADMIN' LIMIT 1), 'system'),
-('user@gmail.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2W69IH.UU8.MSVMLUKKdLNq', 'Test User', 25, 'FEMALE', 'Ho Chi Minh, Vietnam',
-    (SELECT id FROM roles WHERE name = 'ROLE_USER' LIMIT 1), 'system'),
-('hr@gmail.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2W69IH.UU8.MSVMLUKKdLNq', 'HR Manager', 35, 'MALE', 'Da Nang, Vietnam',
-    (SELECT id FROM roles WHERE name = 'ROLE_HR' LIMIT 1), 'system')
-ON DUPLICATE KEY UPDATE email=email;
+-- ============================================
+-- NOTE: Users are seeded by application code!
+-- ============================================
+-- Users need BCrypt password hashing which depends on Spring Security configuration.
+-- See: auth-service/src/main/java/vn/hoidanit/authservice/config/DatabaseSeeder.java
+-- Default users will be created on first application startup:
+--   - admin@gmail.com (password: 123456)
+--   - user@gmail.com (password: 123456)
+--   - hr@gmail.com (password: 123456)
+-- ============================================
 
 -- Insert sample permissions
 INSERT INTO permissions (name, api_path, method, module, created_by) VALUES
@@ -123,14 +123,13 @@ CREATE TABLE IF NOT EXISTS companies (
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert sample companies
-INSERT INTO companies (name, description, address, created_by) VALUES
-('Google Vietnam', 'Leading technology company', 'District 1, Ho Chi Minh City', 'admin@gmail.com'),
-('Amazon Vietnam', 'E-commerce and cloud computing', 'Hanoi, Vietnam', 'admin@gmail.com'),
-('Microsoft Vietnam', 'Software and technology services', 'District 7, Ho Chi Minh City', 'admin@gmail.com'),
-('Apple Vietnam', 'Consumer electronics and software', 'Hanoi, Vietnam', 'admin@gmail.com'),
-('Netflix Vietnam', 'Streaming entertainment service', 'Ho Chi Minh City', 'admin@gmail.com')
-ON DUPLICATE KEY UPDATE name=name;
+-- ============================================
+-- NOTE: Sample companies are seeded by application code!
+-- ============================================
+-- Sample companies for dev/test are created by CompanyService seeder.
+-- See: company-service/src/main/java/vn/hoidanit/companyservice/config/DatabaseSeeder.java
+-- Production should start with empty companies table.
+-- ============================================
 
 SELECT 'Company DB initialized successfully!' AS status;
 
@@ -179,34 +178,13 @@ CREATE TABLE IF NOT EXISTS job_skill (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert sample skills
-INSERT INTO skills (name, created_by) VALUES
-('Java', 'system'),
-('Spring Boot', 'system'),
-('MySQL', 'system'),
-('PostgreSQL', 'system'),
-('MongoDB', 'system'),
-('Redis', 'system'),
-('Docker', 'system'),
-('Kubernetes', 'system'),
-('AWS', 'system'),
-('React', 'system'),
-('Angular', 'system'),
-('Vue.js', 'system'),
-('Node.js', 'system'),
-('Python', 'system'),
-('JavaScript', 'system'),
-('TypeScript', 'system')
-ON DUPLICATE KEY UPDATE name=name;
-
--- Insert sample jobs
-INSERT INTO jobs (name, location, salary, quantity, level, description, company_id, active, created_by) VALUES
-('Backend Developer', 'Hanoi', 2000.00, 5, 'JUNIOR', 'Looking for Java Spring Boot developers', 1, TRUE, 'admin@gmail.com'),
-('Frontend Developer', 'Ho Chi Minh', 1800.00, 3, 'MIDDLE', 'React developer needed', 2, TRUE, 'admin@gmail.com'),
-('Full Stack Developer', 'Da Nang', 2500.00, 2, 'SENIOR', 'Full stack with Java and React', 3, TRUE, 'admin@gmail.com'),
-('DevOps Engineer', 'Hanoi', 2800.00, 2, 'SENIOR', 'Experience with Docker and Kubernetes', 1, TRUE, 'admin@gmail.com'),
-('Mobile Developer', 'Ho Chi Minh', 2200.00, 4, 'MIDDLE', 'iOS/Android development', 4, TRUE, 'admin@gmail.com')
-ON DUPLICATE KEY UPDATE name=name;
-
+-- ============================================
+-- NOTE: Sample skills and jobs are seeded by application code!
+-- ============================================
+-- Sample data for dev/test is created by JobService seeder.
+-- See: job-service/src/main/java/vn/hoidanit/jobservice/config/DatabaseSeeder.java
+-- Production should start with empty skills/jobs tables.
+-- ============================================
 SELECT 'Job DB initialized successfully!' AS status;
 
 -- ========================================

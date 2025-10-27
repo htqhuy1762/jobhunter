@@ -130,6 +130,19 @@ public class MinioService {
             return false;
         }
     }
+
+    /**
+     * Get file size in bytes
+     */
+    public long getFileSize(String objectName) throws Exception {
+        var stat = minioClient.statObject(
+                StatObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build()
+        );
+        return stat.size();
+    }
 }
 
 

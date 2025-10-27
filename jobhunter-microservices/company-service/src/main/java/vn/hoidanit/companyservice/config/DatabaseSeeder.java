@@ -3,7 +3,9 @@ package vn.hoidanit.companyservice.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import vn.hoidanit.companyservice.domain.Company;
 import vn.hoidanit.companyservice.repository.CompanyRepository;
 
@@ -11,102 +13,109 @@ import java.time.Instant;
 
 /**
  * Database Seeder for Company Service
- * Automatically creates sample companies when application starts
- * Run once when application starts
+ * Creates sample companies for development and testing ONLY
+ *
+ * This seeder runs ONLY in dev/test profiles, NOT in production!
+ * Production environments should start with an empty companies table.
  */
-@Component
+@Configuration
 @RequiredArgsConstructor
 @Slf4j
-public class DatabaseSeeder implements CommandLineRunner {
+public class DatabaseSeeder {
 
     private final CompanyRepository companyRepository;
 
-    @Override
-    public void run(String... args) throws Exception {
-        log.info("=== COMPANY SERVICE - DATABASE SEEDER START ===");
+    /**
+     * Seed sample companies for development/testing
+     * Only runs in 'dev' and 'test' profiles
+     */
+    @Bean
+    @Profile({"dev", "test", "docker"})
+    public CommandLineRunner seedCompanies() {
+        return args -> {
+            log.info("🌱 COMPANY SERVICE - Starting database seeding...");
 
-        // Create sample companies based on SQL dump data
-        createCompanyIfNotExists(
-            "Google Vietnam",
-            "Leading technology company specializing in search, cloud computing, and advertising",
-            "District 1, Ho Chi Minh City",
-            "1716687909879-google.png"
-        );
+            // Check if companies already exist
+            if (companyRepository.count() > 0) {
+                log.info("✅ Companies already exist, skipping seeding");
+                return;
+            }
 
-        createCompanyIfNotExists(
-            "Amazon Vietnam",
-            "E-commerce and cloud computing giant offering retail and AWS services",
-            "Hanoi, Vietnam",
-            "1716687538974-amzon.jpg"
-        );
+            // Create sample companies with logos from MinIO
+            createCompany(
+                "Google Vietnam",
+                "Leading technology company specializing in search, cloud computing, and advertising",
+                "District 1, Ho Chi Minh City",
+                "1716687909879-google.png"
+            );
 
-        createCompanyIfNotExists(
-            "Microsoft Vietnam",
-            "Software and technology services provider, creator of Windows and Office",
-            "District 7, Ho Chi Minh City",
-            "1716688087166-microsoft.png"
-        );
+            createCompany(
+                "Amazon Vietnam",
+                "E-commerce and cloud computing giant offering retail and AWS services",
+                "Hanoi, Vietnam",
+                "1716687538974-amzon.jpg"
+            );
 
-        createCompanyIfNotExists(
-            "Apple Vietnam",
-            "Consumer electronics and software company known for iPhone, iPad, and Mac",
-            "Hanoi, Vietnam",
-            "1716687768336-apple.jpg"
-        );
+            createCompany(
+                "Microsoft Vietnam",
+                "Software and technology services provider, creator of Windows and Office",
+                "District 7, Ho Chi Minh City",
+                null // No logo yet
+            );
 
-        createCompanyIfNotExists(
-            "Netflix Vietnam",
-            "Streaming entertainment service providing movies and TV shows",
-            "Ho Chi Minh City",
-            "1716688227085-netflix.png"
-        );
+            createCompany(
+                "Apple Vietnam",
+                "Consumer electronics and software company known for iPhone, iPad, and Mac",
+                "Hanoi, Vietnam",
+                "1716687768336-apple.jpg"
+            );
 
-        createCompanyIfNotExists(
-            "Meta (Facebook)",
-            "Social media and technology company focusing on connecting people worldwide",
-            "District 1, Ho Chi Minh City",
-            "1716688370649-meta.png"
-        );
+            createCompany(
+                "Netflix Vietnam",
+                "Streaming entertainment service providing movies and TV shows",
+                "Ho Chi Minh City",
+                "1716688067538-netflix.png"
+            );
 
-        createCompanyIfNotExists(
-            "Tesla Vietnam",
-            "Electric vehicle and clean energy company revolutionizing automotive industry",
-            "Hanoi, Vietnam",
-            "1716688554413-tesla.png"
-        );
+            createCompany(
+                "Shopee Vietnam",
+                "Leading e-commerce platform in Southeast Asia",
+                "District 7, Ho Chi Minh City",
+                "1716688292011-shopee.png"
+            );
 
-        createCompanyIfNotExists(
-            "Shopee Vietnam",
-            "Leading e-commerce platform in Southeast Asia",
-            "District 7, Ho Chi Minh City",
-            "1716688017004-lazada.png"
-        );
+            createCompany(
+                "Lazada Vietnam",
+                "E-commerce platform offering wide range of products",
+                "Hanoi, Vietnam",
+                "1716688017004-lazada.png"
+            );
 
-        log.info("=== COMPANY SERVICE - DATABASE SEEDER COMPLETED ===");
+            createCompany(
+                "Tiki Vietnam",
+                "Online shopping platform and book store",
+                "Ho Chi Minh City",
+                "1716688336563-tiki.jpg"
+            );
+
+            log.info("🎉 COMPANY SERVICE - Database seeding completed successfully!");
+        };
     }
 
-    private void createCompanyIfNotExists(String name, String description, String address, String logo) {
+    private void createCompany(String name, String description, String address, String logo) {
         try {
-            // Check if company already exists by name
-            boolean exists = companyRepository.findAll().stream()
-                    .anyMatch(c -> c.getName().equalsIgnoreCase(name));
+            Company company = new Company();
+            company.setName(name);
+            company.setDescription(description);
+            company.setAddress(address);
+            company.setLogo(logo);
+            company.setCreatedBy("system");
+            company.setCreatedAt(Instant.now());
 
-            if (!exists) {
-                Company company = new Company();
-                company.setName(name);
-                company.setDescription(description);
-                company.setAddress(address);
-                company.setLogo(logo);
-                company.setCreatedBy("system");
-                company.setCreatedAt(Instant.now());
-
-                companyRepository.save(company);
-                log.info("✅ Created company: {}", name);
-            } else {
-                log.info("ℹ️ Company already exists: {}", name);
-            }
+            companyRepository.save(company);
+            log.info("✅ Created company: {}", name);
         } catch (Exception e) {
-            log.error("❌ Failed to create company: {} | Error: {}", name, e.getMessage(), e);
+            log.error("❌ Failed to create company: {} | Error: {}", name, e.getMessage());
         }
     }
 }

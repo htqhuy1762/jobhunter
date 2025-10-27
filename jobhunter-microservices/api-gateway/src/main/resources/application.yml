@@ -107,13 +107,29 @@ spring:
           filters:
             - JwtAuthenticationFilter
 
-        # File Service
-        - id: file-service
+        # File Service - Upload (Protected)
+        - id: file-service-upload
           uri: lb://file-service
           predicates:
-            - Path=/api/v1/files/**,/api/v1/storage/**
+            - Path=/api/v1/files/**
+            - Method=POST
           filters:
             - JwtAuthenticationFilter
+
+        # File Service - Download (Protected)
+        - id: file-service-download
+          uri: lb://file-service
+          predicates:
+            - Path=/api/v1/files/**
+            - Method=GET
+          filters:
+            - JwtAuthenticationFilter
+
+        # File Service - Static Files (Public - for serving images like company logos)
+        - id: file-service-static
+          uri: lb://file-service
+          predicates:
+            - Path=/storage/**
 
         # Notification Service - Public
         - id: notification-service-public

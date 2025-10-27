@@ -3,7 +3,9 @@ package vn.hoidanit.jobservice.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.Skill;
 import vn.hoidanit.jobservice.repository.JobRepository;
@@ -18,31 +20,46 @@ import java.util.List;
 
 /**
  * Database Seeder for Job Service
- * Automatically creates sample skills and jobs when application starts
- * Run once when application starts
+ * Creates sample skills and jobs for development and testing ONLY
+ *
+ * This seeder runs ONLY in dev/test profiles, NOT in production!
+ * Production environments should start with empty skills/jobs tables.
  */
-@Component
+@Configuration
 @RequiredArgsConstructor
 @Slf4j
-public class DatabaseSeeder implements CommandLineRunner {
+public class DatabaseSeeder {
 
     private final SkillRepository skillRepository;
     private final JobRepository jobRepository;
 
-    @Override
-    public void run(String... args) throws Exception {
-        log.info("=== JOB SERVICE - DATABASE SEEDER START ===");
+    /**
+     * Seed sample skills and jobs for development/testing
+     * Only runs in 'dev', 'test', and 'docker' profiles
+     */
+    @Bean
+    @Profile({"dev", "test", "docker"})
+    public CommandLineRunner seedData() {
+        return args -> {
+            log.info("🌱 JOB SERVICE - Starting database seeding...");
 
-        // Create skills first
-        createSkillsIfNotExist();
+            // Check if data already exists
+            if (skillRepository.count() > 0 || jobRepository.count() > 0) {
+                log.info("✅ Skills/Jobs already exist, skipping seeding");
+                return;
+            }
 
-        // Create sample jobs
-        createJobsIfNotExist();
+            // Create skills first
+            createSkills();
 
-        log.info("=== JOB SERVICE - DATABASE SEEDER COMPLETED ===");
+            // Create sample jobs
+            createJobs();
+
+            log.info("🎉 JOB SERVICE - Database seeding completed successfully!");
+        };
     }
 
-    private void createSkillsIfNotExist() {
+    private void createSkills() {
         log.info("--- Creating Skills ---");
 
         String[] skillNames = {
@@ -54,23 +71,19 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         for (String skillName : skillNames) {
             try {
-                if (!skillRepository.existsByName(skillName)) {
-                    Skill skill = new Skill();
-                    skill.setName(skillName);
-                    skill.setCreatedBy("system");
-                    skill.setCreatedAt(Instant.now());
-                    skillRepository.save(skill);
-                    log.info("✅ Created skill: {}", skillName);
-                } else {
-                    log.info("ℹ️ Skill already exists: {}", skillName);
-                }
+                Skill skill = new Skill();
+                skill.setName(skillName);
+                skill.setCreatedBy("system");
+                skill.setCreatedAt(Instant.now());
+                skillRepository.save(skill);
+                log.info("✅ Created skill: {}", skillName);
             } catch (Exception e) {
                 log.error("❌ Failed to create skill: {} | Error: {}", skillName, e.getMessage());
             }
         }
     }
 
-    private void createJobsIfNotExist() {
+    private void createJobs() {
         log.info("--- Creating Jobs ---");
 
         // Job 1: Backend Developer

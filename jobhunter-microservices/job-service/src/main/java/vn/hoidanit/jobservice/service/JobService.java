@@ -120,6 +120,11 @@ public class JobService {
     public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable) {
         Page<Job> pageJob = this.jobRepository.findAll(spec, pageable);
 
+        // Enrich jobs with company data
+        List<vn.hoidanit.jobservice.dto.ResJobDTO> enrichedJobs = pageJob.getContent().stream()
+                .map(this::convertToResJobDTO)
+                .collect(Collectors.toList());
+
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 
@@ -130,9 +135,67 @@ public class JobService {
         mt.setTotal(pageJob.getTotalElements());
 
         rs.setMeta(mt);
-        rs.setResult(pageJob.getContent());
+        rs.setResult(enrichedJobs);
 
         return rs;
+    }
+
+    /**
+     * Convert Job entity to ResJobDTO with company information
+     */
+    private vn.hoidanit.jobservice.dto.ResJobDTO convertToResJobDTO(Job job) {
+        vn.hoidanit.jobservice.dto.ResJobDTO dto = new vn.hoidanit.jobservice.dto.ResJobDTO();
+
+        // Job basic info
+        dto.setId(job.getId());
+        dto.setName(job.getName());
+        dto.setLocation(job.getLocation());
+        dto.setSalary(job.getSalary());
+        dto.setQuantity(job.getQuantity());
+        dto.setLevel(job.getLevel());
+        dto.setDescription(job.getDescription());
+        dto.setStartDate(job.getStartDate());
+        dto.setEndDate(job.getEndDate());
+        dto.setActive(job.isActive());
+        dto.setCreatedAt(job.getCreatedAt());
+        dto.setUpdatedAt(job.getUpdatedAt());
+        dto.setCreatedBy(job.getCreatedBy());
+        dto.setUpdatedBy(job.getUpdatedBy());
+
+        // Skills
+        if (job.getSkills() != null) {
+            dto.setSkills(job.getSkills().stream()
+                    .map(Skill::getName)
+                    .collect(Collectors.toList()));
+        }
+
+        // Fetch company data via Feign Client
+        if (job.getCompanyId() != null) {
+            try {
+                var companyResponse = companyClient.getCompanyById(job.getCompanyId());
+                if (companyResponse != null && companyResponse.getData() != null) {
+                    CompanyDTO company = companyResponse.getData();
+                    vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo companyInfo =
+                        new vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo();
+                    companyInfo.setId(company.getId());
+                    companyInfo.setName(company.getName());
+                    companyInfo.setLogo(company.getLogo());
+                    dto.setCompany(companyInfo);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch company {} for job {}: {}",
+                         job.getCompanyId(), job.getId(), e.getMessage());
+                // Set minimal company info if fetch fails
+                vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo companyInfo =
+                    new vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo();
+                companyInfo.setId(job.getCompanyId());
+                companyInfo.setName("Unknown");
+                companyInfo.setLogo(null);
+                dto.setCompany(companyInfo);
+            }
+        }
+
+        return dto;
     }
 }
 

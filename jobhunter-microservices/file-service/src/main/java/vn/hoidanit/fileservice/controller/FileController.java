@@ -60,37 +60,6 @@ public class FileController {
                 .body(resource);
     }
 
-    @GetMapping("/storage/{folder}/{fileName:.+}")
-    public ResponseEntity<Resource> serveFile(
-            @PathVariable String folder,
-            @PathVariable String fileName) throws Exception {
-
-        long fileLength = this.fileService.getFileSize(fileName, folder);
-        if (fileLength == 0) {
-            throw new RuntimeException("File with the name = " + fileName + " not found");
-        }
-
-        InputStreamResource resource = this.fileService.downloadFile(fileName, folder);
-        String contentType = getContentType(fileName);
-
-        return ResponseEntity.ok()
-                .contentLength(fileLength)
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(resource);
-    }
-
-    private String getContentType(String fileName) {
-        String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-        return switch (extension) {
-            case "jpg", "jpeg" -> "image/jpeg";
-            case "png" -> "image/png";
-            case "gif" -> "image/gif";
-            case "pdf" -> "application/pdf";
-            case "doc" -> "application/msword";
-            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            default -> "application/octet-stream";
-        };
-    }
 
     public static record ResUploadFileDTO(String fileName, Instant uploadedAt) {}
 }

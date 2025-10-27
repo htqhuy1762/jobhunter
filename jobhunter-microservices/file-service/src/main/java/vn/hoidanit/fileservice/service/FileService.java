@@ -46,12 +46,7 @@ public class FileService {
     public long getFileSize(String fileName, String folder) {
         String objectName = folder + "/" + fileName;
         try {
-            if (!minioService.fileExists(objectName)) {
-                return 0;
-            }
-            // For MinIO, we can return a non-zero value if file exists
-            // The actual size will be handled during download
-            return 1; // Simplified - actual implementation would query MinIO for size
+            return minioService.getFileSize(objectName);
         } catch (Exception e) {
             log.error("Error checking file size: {}", e.getMessage());
             return 0;
