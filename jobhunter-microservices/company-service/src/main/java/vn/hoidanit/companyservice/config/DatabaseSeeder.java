@@ -14,7 +14,7 @@ import java.time.Instant;
 /**
  * Database Seeder for Company Service
  * Creates sample companies for development and testing ONLY
- *
+ * <p>
  * This seeder runs ONLY in dev/test profiles, NOT in production!
  * Production environments should start with an empty companies table.
  */
@@ -43,59 +43,59 @@ public class DatabaseSeeder {
 
             // Create sample companies with logos from MinIO
             createCompany(
-                "Google Vietnam",
-                "Leading technology company specializing in search, cloud computing, and advertising",
-                "District 1, Ho Chi Minh City",
-                "1716687909879-google.png"
+                    "Google Vietnam",
+                    "Leading technology company specializing in search, cloud computing, and advertising",
+                    "District 1, Ho Chi Minh City",
+                    "1716687909879-google.png"
             );
 
             createCompany(
-                "Amazon Vietnam",
-                "E-commerce and cloud computing giant offering retail and AWS services",
-                "Hanoi, Vietnam",
-                "1716687538974-amzon.jpg"
+                    "Amazon Vietnam",
+                    "E-commerce and cloud computing giant offering retail and AWS services",
+                    "Hanoi, Vietnam",
+                    "1716687538974-amzon.jpg"
             );
 
             createCompany(
-                "Microsoft Vietnam",
-                "Software and technology services provider, creator of Windows and Office",
-                "District 7, Ho Chi Minh City",
-                null // No logo yet
+                    "Microsoft Vietnam",
+                    "Software and technology services provider, creator of Windows and Office",
+                    "District 7, Ho Chi Minh City",
+                    "1716688067540-microsoft.png"
             );
 
             createCompany(
-                "Apple Vietnam",
-                "Consumer electronics and software company known for iPhone, iPad, and Mac",
-                "Hanoi, Vietnam",
-                "1716687768336-apple.jpg"
+                    "Apple Vietnam",
+                    "Consumer electronics and software company known for iPhone, iPad, and Mac",
+                    "Hanoi, Vietnam",
+                    "1716687768336-apple.jpg"
             );
 
             createCompany(
-                "Netflix Vietnam",
-                "Streaming entertainment service providing movies and TV shows",
-                "Ho Chi Minh City",
-                "1716688067538-netflix.png"
+                    "Netflix Vietnam",
+                    "Streaming entertainment service providing movies and TV shows",
+                    "Ho Chi Minh City",
+                    "1716688067538-netflix.png"
             );
 
             createCompany(
-                "Shopee Vietnam",
-                "Leading e-commerce platform in Southeast Asia",
-                "District 7, Ho Chi Minh City",
-                "1716688292011-shopee.png"
+                    "Shopee Vietnam",
+                    "Leading e-commerce platform in Southeast Asia",
+                    "District 7, Ho Chi Minh City",
+                    "1716688292011-shopee.png"
             );
 
             createCompany(
-                "Lazada Vietnam",
-                "E-commerce platform offering wide range of products",
-                "Hanoi, Vietnam",
-                "1716688017004-lazada.png"
+                    "Lazada Vietnam",
+                    "E-commerce platform offering wide range of products",
+                    "Hanoi, Vietnam",
+                    "1716688017004-lazada.png"
             );
 
             createCompany(
-                "Tiki Vietnam",
-                "Online shopping platform and book store",
-                "Ho Chi Minh City",
-                "1716688336563-tiki.jpg"
+                    "Tiki Vietnam",
+                    "Online shopping platform and book store",
+                    "Ho Chi Minh City",
+                    "1716688336563-tiki.jpg"
             );
 
             log.info("🎉 COMPANY SERVICE - Database seeding completed successfully!");
