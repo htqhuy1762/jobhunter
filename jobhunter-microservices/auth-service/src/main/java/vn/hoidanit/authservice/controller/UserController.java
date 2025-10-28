@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.authservice.annotation.PageableDefault;
+import vn.hoidanit.authservice.annotation.RateLimit;
 import vn.hoidanit.authservice.domain.User;
 import vn.hoidanit.authservice.domain.dto.ResCreateUserDTO;
 import vn.hoidanit.authservice.domain.dto.ResUpdateUserDTO;
@@ -25,6 +26,7 @@ public class UserController {
 
     private final UserService userService;
 
+    @RateLimit(name = "createUser")
     @PostMapping
     public ResponseEntity<RestResponse<ResCreateUserDTO>> createNewUser(@Valid @RequestBody User user) {
         boolean isEmailExist = this.userService.isEmailExist(user.getEmail());

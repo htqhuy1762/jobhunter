@@ -35,6 +35,11 @@ dependencies {
     // Spring Cloud
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
 
+    // Resilience4j for Rate Limiting
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
+
     // Spring Filter for dynamic querying
     implementation("com.turkraft.springfilter:jpa:3.1.7")
 

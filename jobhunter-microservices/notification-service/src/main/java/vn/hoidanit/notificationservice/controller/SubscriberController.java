@@ -20,6 +20,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import vn.hoidanit.notificationservice.annotation.RateLimit;
 import vn.hoidanit.notificationservice.domain.Subscriber;
 import vn.hoidanit.notificationservice.domain.response.RestResponse;
 import vn.hoidanit.notificationservice.service.SubscriberService;
@@ -32,6 +33,7 @@ import vn.hoidanit.notificationservice.util.SecurityUtil;
 public class SubscriberController {
     private final SubscriberService subscriberService;
 
+    @RateLimit(name = "createSubscriber")
     @PostMapping("/subscribers")
     public ResponseEntity<RestResponse<Subscriber>> create(@Valid @RequestBody Subscriber subscriber) {
         // Check email exists

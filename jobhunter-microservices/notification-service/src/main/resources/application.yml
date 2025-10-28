@@ -99,7 +99,6 @@ resilience4j:
         maxAttempts: 3
         waitDuration: 2s
         enableExponentialBackoff: true
-        exponentialBackoffMultiplier: 2
 
   ratelimiter:
     instances:
@@ -107,7 +106,7 @@ resilience4j:
         limitForPeriod: 10
         limitRefreshPeriod: 1s
         timeoutDuration: 0s
-      sendBulkEmail:
+      createSubscriber:
         limitForPeriod: 5
         limitRefreshPeriod: 1s
         timeoutDuration: 0s

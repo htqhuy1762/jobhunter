@@ -70,3 +70,25 @@ hoidanit:
     access-token-validity-in-seconds: 900
     refresh-token-validity-in-seconds: 604800
     cookie-secure: false  # Set to true in production (HTTPS), false for local development (HTTP)
+
+# Resilience4j Configuration for Rate Limiting
+resilience4j:
+  ratelimiter:
+    instances:
+      login:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      register:
+        limitForPeriod: 3
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      createUser:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      report:
+        limitForPeriod: 20
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+

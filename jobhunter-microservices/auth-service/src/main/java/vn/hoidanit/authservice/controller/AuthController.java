@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import vn.hoidanit.authservice.annotation.RateLimit;
 import vn.hoidanit.authservice.domain.User;
 import vn.hoidanit.authservice.domain.dto.ReqLoginDTO;
 import vn.hoidanit.authservice.domain.dto.ResLoginDTO;
@@ -41,6 +42,7 @@ public class AuthController {
     @Value("${hoidanit.jwt.cookie-secure}")
     private boolean cookieSecure;
 
+    @RateLimit(name = "login")
     @PostMapping("/login")
     public ResponseEntity<RestResponse<ResLoginDTO>> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
         log.info("Login attempt for user: {}", loginDTO.getUsername());
