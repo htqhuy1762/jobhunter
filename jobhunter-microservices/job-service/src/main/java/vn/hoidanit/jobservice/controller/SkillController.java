@@ -18,6 +18,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobservice.annotation.PageableDefault;
+import vn.hoidanit.jobservice.annotation.RequireRole;
 import vn.hoidanit.jobservice.domain.Skill;
 import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
@@ -30,6 +31,7 @@ public class SkillController {
     private final SkillService skillService;
 
     @PostMapping("/skills")
+    @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Skill>> create(@Valid @RequestBody Skill skill) {
         if (skill.getName() != null && this.skillService.isNameExist(skill.getName())) {
             return ResponseEntity.badRequest().build();
@@ -40,6 +42,7 @@ public class SkillController {
     }
 
     @PutMapping("/skills")
+    @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Skill>> update(@Valid @RequestBody Skill skill) {
         Skill currentSkill = this.skillService.fetchSkillById(skill.getId());
 
@@ -66,6 +69,7 @@ public class SkillController {
     }
 
     @DeleteMapping("/skills/{id}")
+    @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Skill currSkill = this.skillService.fetchSkillById(id);
         if(currSkill == null) {

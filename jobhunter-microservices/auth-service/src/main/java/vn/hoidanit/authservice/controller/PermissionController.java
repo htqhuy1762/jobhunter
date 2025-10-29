@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.turkraft.springfilter.boot.Filter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import vn.hoidanit.authservice.service.PermissionService;
 @RestController
 @RequestMapping("/api/v1/permissions")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
 public class PermissionController {
 
     private final PermissionService permissionService;

@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.fileservice.annotation.RateLimit;
+import vn.hoidanit.fileservice.annotation.RequireRole;
 import vn.hoidanit.fileservice.domain.response.RestResponse;
 import vn.hoidanit.fileservice.service.FileService;
 
@@ -30,6 +31,7 @@ public class FileController {
 
     @PostMapping("/files")
     @RateLimit(name = "uploadFile")
+    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<ResUploadFileDTO>> uploadFile(
             @RequestParam(name = "file", required = false) MultipartFile file,
             @RequestParam("folder") String folder) throws Exception {
@@ -41,6 +43,7 @@ public class FileController {
 
     @GetMapping("/files")
     @RateLimit(name = "downloadFile")
+    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<Resource> download(
             @RequestParam(name = "fileName", required = false) String fileName,
             @RequestParam(name = "folder", required = false) String folder) throws Exception {

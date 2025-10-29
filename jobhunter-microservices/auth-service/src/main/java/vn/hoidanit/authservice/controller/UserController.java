@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.turkraft.springfilter.boot.Filter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ public class UserController {
 
     @RateLimit(name = "createUser")
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResCreateUserDTO>> createNewUser(@Valid @RequestBody User user) {
         boolean isEmailExist = this.userService.isEmailExist(user.getEmail());
         if (isEmailExist) {
@@ -40,6 +42,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<RestResponse<Void>> deleteUser(@PathVariable("id") long id) {
         User currentUser = this.userService.handleGetUserById(id);
         if (currentUser == null) {
@@ -51,6 +54,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR')")
     public ResponseEntity<RestResponse<ResUserDTO>> getUserById(@PathVariable("id") long id) {
         User user = this.userService.handleGetUserById(id);
         if (user == null) {
@@ -62,6 +66,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR')")
     public ResponseEntity<RestResponse<ResultPaginationDTO>> getAllUser(
             @Filter Specification<User> spec,
             @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
@@ -71,6 +76,7 @@ public class UserController {
     }
 
     @PutMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<RestResponse<ResUpdateUserDTO>> updateUser(@RequestBody User user) {
         User updatedUser = this.userService.handleUpdateUser(user);
         if (updatedUser == null) {

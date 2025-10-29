@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.notificationservice.annotation.RateLimit;
+import vn.hoidanit.notificationservice.annotation.RequireRole;
 import vn.hoidanit.notificationservice.domain.Subscriber;
 import vn.hoidanit.notificationservice.domain.response.RestResponse;
 import vn.hoidanit.notificationservice.service.SubscriberService;
@@ -46,6 +47,7 @@ public class SubscriberController {
     }
 
     @PutMapping("/subscribers")
+    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Subscriber>> update(@RequestBody Subscriber subscriber) {
         // Check exists
         Subscriber currentSubscriber = this.subscriberService.findById(subscriber.getId());
@@ -53,11 +55,25 @@ public class SubscriberController {
             return ResponseEntity.notFound().build();
         }
 
+        // Data-level authorization: USER can only update their own subscription
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().orElse("");
+        String currentUserRoles = SecurityUtil.getCurrentUserRoles().orElse("");
+
+        boolean isAdmin = currentUserRoles != null && currentUserRoles.contains("ROLE_ADMIN");
+        boolean isOwner = currentUserEmail != null && currentUserEmail.equals(currentSubscriber.getEmail());
+
+        if (!isAdmin && !isOwner) {
+            log.warn("User {} attempted to update subscriber {} without permission", currentUserEmail, currentSubscriber.getEmail());
+            return RestResponse.error(org.springframework.http.HttpStatus.FORBIDDEN,
+                "You don't have permission to update this subscription");
+        }
+
         Subscriber updatedSubscriber = this.subscriberService.update(currentSubscriber, subscriber);
         return RestResponse.ok(updatedSubscriber, "Update subscriber successfully");
     }
 
     @GetMapping("/subscribers/skills")
+    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<List<Long>>> getSubscriberSkills() {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
         log.info("Fetching subscribed skills for user: {}", email);
@@ -75,6 +91,7 @@ public class SubscriberController {
     }
 
     @GetMapping("/subscribers/{id}")
+    @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Subscriber>> fetchById(@PathVariable("id") long id) {
         Subscriber subscriber = this.subscriberService.findById(id);
         if (subscriber == null) {
@@ -85,10 +102,24 @@ public class SubscriberController {
     }
 
     @DeleteMapping("/subscribers/{id}")
+    @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Subscriber subscriber = this.subscriberService.findById(id);
         if (subscriber == null) {
             return ResponseEntity.notFound().build();
+        }
+
+        // Data-level authorization: USER can only delete their own subscription
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().orElse("");
+        String currentUserRoles = SecurityUtil.getCurrentUserRoles().orElse("");
+
+        boolean isAdmin = currentUserRoles != null && currentUserRoles.contains("ROLE_ADMIN");
+        boolean isOwner = currentUserEmail != null && currentUserEmail.equals(subscriber.getEmail());
+
+        if (!isAdmin && !isOwner) {
+            log.warn("User {} attempted to delete subscriber {} without permission", currentUserEmail, subscriber.getEmail());
+            return RestResponse.error(org.springframework.http.HttpStatus.FORBIDDEN,
+                "You don't have permission to delete this subscription");
         }
 
         this.subscriberService.delete(id);
@@ -96,6 +127,7 @@ public class SubscriberController {
     }
 
     @GetMapping("/subscribers/by-email")
+    @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Subscriber>> fetchByEmail(String email) {
         Subscriber subscriber = this.subscriberService.findByEmail(email);
         if (subscriber == null) {

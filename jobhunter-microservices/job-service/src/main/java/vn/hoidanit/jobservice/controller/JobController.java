@@ -20,6 +20,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.hoidanit.jobservice.annotation.PageableDefault;
+import vn.hoidanit.jobservice.annotation.RequireRole;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
@@ -34,12 +35,14 @@ public class JobController {
     private final JobService jobService;
 
     @PostMapping("/jobs")
+    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<ResCreateJobDTO>> create(@Valid @RequestBody Job job) {
         ResCreateJobDTO createdJob = this.jobService.create(job);
         return RestResponse.created(createdJob, "Create job successfully");
     }
 
     @PutMapping("/jobs")
+    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<ResUpdateJobDTO>> update(@Valid @RequestBody Job job) {
         Optional<Job> currentJob = this.jobService.fetchJobById(job.getId());
         if(!currentJob.isPresent()) {
@@ -51,6 +54,7 @@ public class JobController {
     }
 
     @DeleteMapping("/jobs/{id}")
+    @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {
         Optional<Job> currentJob = this.jobService.fetchJobById(id);
         if(!currentJob.isPresent()) {

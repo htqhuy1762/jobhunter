@@ -58,12 +58,20 @@ public class JwtService {
         // Permissions - Handle null/lazy loading safely
         List<String> listAuthority = new ArrayList<>();
         try {
-            if (dto.getUser().getRole() != null && dto.getUser().getRole().getPermissions() != null) {
-                dto.getUser().getRole().getPermissions().forEach(permission -> {
-                    if (permission != null && permission.getName() != null) {
-                        listAuthority.add(permission.getName());
-                    }
-                });
+            if (dto.getUser().getRole() != null) {
+                // Add role name first (e.g., ROLE_ADMIN, ROLE_HR, ROLE_USER)
+                if (dto.getUser().getRole().getName() != null) {
+                    listAuthority.add(dto.getUser().getRole().getName());
+                }
+
+                // Then add all permissions
+                if (dto.getUser().getRole().getPermissions() != null) {
+                    dto.getUser().getRole().getPermissions().forEach(permission -> {
+                        if (permission != null && permission.getName() != null) {
+                            listAuthority.add(permission.getName());
+                        }
+                    });
+                }
             }
         } catch (Exception e) {
             // Handle LazyInitializationException or any other exception

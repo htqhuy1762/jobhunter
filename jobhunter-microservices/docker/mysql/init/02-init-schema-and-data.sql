@@ -84,23 +84,119 @@ ON DUPLICATE KEY UPDATE name=name;
 --   - hr@gmail.com (password: 123456)
 -- ============================================
 
--- Insert sample permissions
+-- Insert comprehensive permissions for all modules
 INSERT INTO permissions (name, api_path, method, module, created_by) VALUES
+-- User Management (ADMIN only)
 ('CREATE_USER', '/api/v1/users', 'POST', 'USER', 'system'),
 ('UPDATE_USER', '/api/v1/users/*', 'PUT', 'USER', 'system'),
 ('DELETE_USER', '/api/v1/users/*', 'DELETE', 'USER', 'system'),
 ('VIEW_USER', '/api/v1/users', 'GET', 'USER', 'system'),
+
+-- Role Management (ADMIN only)
+('CREATE_ROLE', '/api/v1/roles', 'POST', 'ROLE', 'system'),
+('UPDATE_ROLE', '/api/v1/roles/*', 'PUT', 'ROLE', 'system'),
+('DELETE_ROLE', '/api/v1/roles/*', 'DELETE', 'ROLE', 'system'),
+('VIEW_ROLE', '/api/v1/roles', 'GET', 'ROLE', 'system'),
+
+-- Permission Management (ADMIN only)
+('CREATE_PERMISSION', '/api/v1/permissions', 'POST', 'PERMISSION', 'system'),
+('UPDATE_PERMISSION', '/api/v1/permissions/*', 'PUT', 'PERMISSION', 'system'),
+('DELETE_PERMISSION', '/api/v1/permissions/*', 'DELETE', 'PERMISSION', 'system'),
+('VIEW_PERMISSION', '/api/v1/permissions', 'GET', 'PERMISSION', 'system'),
+
+-- Company Management
 ('CREATE_COMPANY', '/api/v1/companies', 'POST', 'COMPANY', 'system'),
 ('UPDATE_COMPANY', '/api/v1/companies/*', 'PUT', 'COMPANY', 'system'),
+('DELETE_COMPANY', '/api/v1/companies/*', 'DELETE', 'COMPANY', 'system'),
+('VIEW_COMPANY', '/api/v1/companies', 'GET', 'COMPANY', 'system'),
+
+-- Job Management
 ('CREATE_JOB', '/api/v1/jobs', 'POST', 'JOB', 'system'),
-('UPDATE_JOB', '/api/v1/jobs/*', 'PUT', 'JOB', 'system')
+('UPDATE_JOB', '/api/v1/jobs/*', 'PUT', 'JOB', 'system'),
+('DELETE_JOB', '/api/v1/jobs/*', 'DELETE', 'JOB', 'system'),
+('VIEW_JOB', '/api/v1/jobs', 'GET', 'JOB', 'system'),
+
+-- Skill Management (ADMIN only)
+('CREATE_SKILL', '/api/v1/skills', 'POST', 'SKILL', 'system'),
+('UPDATE_SKILL', '/api/v1/skills/*', 'PUT', 'SKILL', 'system'),
+('DELETE_SKILL', '/api/v1/skills/*', 'DELETE', 'SKILL', 'system'),
+('VIEW_SKILL', '/api/v1/skills', 'GET', 'SKILL', 'system'),
+
+-- Resume Management
+('CREATE_RESUME', '/api/v1/resumes', 'POST', 'RESUME', 'system'),
+('UPDATE_RESUME', '/api/v1/resumes/*', 'PUT', 'RESUME', 'system'),
+('DELETE_RESUME', '/api/v1/resumes/*', 'DELETE', 'RESUME', 'system'),
+('VIEW_ALL_RESUME', '/api/v1/resumes', 'GET', 'RESUME', 'system'),
+('VIEW_OWN_RESUME', '/api/v1/resumes/by-user', 'GET', 'RESUME', 'system'),
+
+-- File Management
+('UPLOAD_FILE', '/api/v1/files', 'POST', 'FILE', 'system'),
+('DOWNLOAD_FILE', '/api/v1/files', 'GET', 'FILE', 'system'),
+
+-- Subscriber Management
+('CREATE_SUBSCRIBER', '/api/v1/subscribers', 'POST', 'SUBSCRIBER', 'system'),
+('UPDATE_SUBSCRIBER', '/api/v1/subscribers', 'PUT', 'SUBSCRIBER', 'system'),
+('DELETE_SUBSCRIBER', '/api/v1/subscribers/*', 'DELETE', 'SUBSCRIBER', 'system'),
+('VIEW_SUBSCRIBER', '/api/v1/subscribers', 'GET', 'SUBSCRIBER', 'system')
 ON DUPLICATE KEY UPDATE name=name;
 
--- Assign permissions to ADMIN role
+-- ==========================================
+-- ASSIGN PERMISSIONS TO ROLE_ADMIN (All permissions)
+-- ==========================================
 INSERT INTO permission_role (permission_id, role_id)
 SELECT p.id, r.id
-FROM permissions p, roles r
+FROM permissions p
+CROSS JOIN roles r
 WHERE r.name = 'ROLE_ADMIN'
+ON DUPLICATE KEY UPDATE permission_id=permission_id;
+
+-- ==========================================
+-- ASSIGN PERMISSIONS TO ROLE_HR
+-- ==========================================
+INSERT INTO permission_role (permission_id, role_id)
+SELECT p.id, r.id
+FROM permissions p
+CROSS JOIN roles r
+WHERE r.name = 'ROLE_HR'
+AND p.name IN (
+    'VIEW_USER',           -- Can view users
+    'VIEW_COMPANY',        -- Can view companies
+    'CREATE_COMPANY',      -- Can create companies
+    'UPDATE_COMPANY',      -- Can update companies
+    'VIEW_JOB',            -- Can view jobs
+    'CREATE_JOB',          -- Can create jobs
+    'UPDATE_JOB',          -- Can update jobs
+    'DELETE_JOB',          -- Can delete jobs
+    'VIEW_SKILL',          -- Can view skills
+    'VIEW_ALL_RESUME',     -- Can view all resumes
+    'UPDATE_RESUME',       -- Can update resume status
+    'DELETE_RESUME',       -- Can delete resumes
+    'UPLOAD_FILE',         -- Can upload files
+    'DOWNLOAD_FILE'        -- Can download files
+)
+ON DUPLICATE KEY UPDATE permission_id=permission_id;
+
+-- ==========================================
+-- ASSIGN PERMISSIONS TO ROLE_USER
+-- ==========================================
+INSERT INTO permission_role (permission_id, role_id)
+SELECT p.id, r.id
+FROM permissions p
+CROSS JOIN roles r
+WHERE r.name = 'ROLE_USER'
+AND p.name IN (
+    'VIEW_COMPANY',        -- Can view companies (public)
+    'VIEW_JOB',            -- Can view jobs (public)
+    'VIEW_SKILL',          -- Can view skills (public)
+    'CREATE_RESUME',       -- Can apply for jobs
+    'VIEW_OWN_RESUME',     -- Can view own resumes
+    'DELETE_RESUME',       -- Can delete own resumes (with ownership check)
+    'UPLOAD_FILE',         -- Can upload files (CV)
+    'DOWNLOAD_FILE',       -- Can download files
+    'CREATE_SUBSCRIBER',   -- Can subscribe to job notifications
+    'UPDATE_SUBSCRIBER',   -- Can update own subscription
+    'DELETE_SUBSCRIBER'    -- Can delete own subscription
+)
 ON DUPLICATE KEY UPDATE permission_id=permission_id;
 
 SELECT 'Auth DB initialized successfully!' AS status;

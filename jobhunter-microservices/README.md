@@ -4,6 +4,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)](https://spring.io/projects/spring-boot)
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-blue)](https://spring.io/projects/spring-cloud)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
+[![Security](https://img.shields.io/badge/RBAC-Implemented-success)](./RBAC-IMPLEMENTATION.md)
 
 ## 📖 Tổng Quan
 
@@ -13,6 +14,7 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 
 ✅ **API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
 ✅ **Service Discovery** tự động với Netflix Eureka  
+✅ **RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role 🔐 [**NEW**](./RBAC-SUMMARY.md)  
 ✅ **Message Queue** với RabbitMQ cho async communication  
 ✅ **Distributed Tracing** với Zipkin  
 ✅ **Resilience Pattern** - Circuit Breaker, Retry, Fallback  

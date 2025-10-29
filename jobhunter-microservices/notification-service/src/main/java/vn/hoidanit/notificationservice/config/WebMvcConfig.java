@@ -14,9 +14,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Role-based access control for all API endpoints
+        // Note: POST /api/v1/subscribers is excluded in Gateway config for public access
         registry.addInterceptor(roleCheckInterceptor)
                 .addPathPatterns("/api/v1/**")
-                .excludePathPatterns("/actuator/**", "/api/v1/subscribers");
+                .excludePathPatterns("/actuator/**");
     }
 }
 
