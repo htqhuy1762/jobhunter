@@ -75,6 +75,20 @@ public class JobController {
         return RestResponse.ok(jobDTO, "Fetch job by id successfully");
     }
 
+    /**
+     * Internal endpoint for service-to-service communication
+     * No RBAC check - relies on Gateway Signature for security
+     */
+    @GetMapping("/jobs/internal/{id}")
+    public ResponseEntity<RestResponse<vn.hoidanit.jobservice.dto.ResJobDTO>> getJobByIdInternal(@PathVariable("id") long id) {
+        vn.hoidanit.jobservice.dto.ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
+        if(jobDTO == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return RestResponse.ok(jobDTO, "Fetch job by id successfully (internal)");
+    }
+
     @GetMapping("/jobs")
     public ResponseEntity<RestResponse<ResultPaginationDTO>> getAllJob(
             @Filter Specification<Job> spec,

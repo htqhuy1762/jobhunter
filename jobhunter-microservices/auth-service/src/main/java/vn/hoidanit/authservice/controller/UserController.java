@@ -65,6 +65,21 @@ public class UserController {
         return RestResponse.ok(userDTO, "Fetch user by id successfully");
     }
 
+    /**
+     * Internal endpoint for service-to-service communication
+     * No RBAC check - relies on Gateway Signature for security
+     */
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<RestResponse<ResUserDTO>> getUserByIdInternal(@PathVariable("id") long id) {
+        User user = this.userService.handleGetUserById(id);
+        if (user == null) {
+            throw new RuntimeException("User với id = " + id + " không tồn tại");
+        }
+
+        ResUserDTO userDTO = this.userService.convertToResUserDTO(user);
+        return RestResponse.ok(userDTO, "Fetch user by id successfully (internal)");
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_HR')")
     public ResponseEntity<RestResponse<ResultPaginationDTO>> getAllUser(

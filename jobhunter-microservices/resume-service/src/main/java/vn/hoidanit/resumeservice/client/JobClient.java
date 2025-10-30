@@ -9,7 +9,7 @@ import vn.hoidanit.resumeservice.dto.JobDTO;
 @FeignClient(name = "job-service", fallback = JobClientFallback.class)
 public interface JobClient {
 
-    @GetMapping("/api/v1/jobs/{id}")
+    @GetMapping("/api/v1/jobs/internal/{id}")
     JobDTO getJobById(@PathVariable("id") Long id);
 }
 

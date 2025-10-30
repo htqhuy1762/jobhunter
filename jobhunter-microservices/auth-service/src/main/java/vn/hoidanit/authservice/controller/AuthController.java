@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.authservice.annotation.RateLimit;
 import vn.hoidanit.authservice.domain.User;
+import vn.hoidanit.authservice.domain.dto.ReqChangePasswordDTO;
 import vn.hoidanit.authservice.domain.dto.ReqLoginDTO;
 import vn.hoidanit.authservice.domain.dto.ResLoginDTO;
 import vn.hoidanit.authservice.domain.response.RestResponse;
@@ -266,6 +267,53 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .body(response);
+    }
+
+    @PostMapping("/change-password")
+    @RateLimit(name = "changePassword")
+    public ResponseEntity<RestResponse<Void>> changePassword(
+            @Valid @RequestBody ReqChangePasswordDTO changePasswordDTO) {
+
+        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        log.info("Change password request for user: {}", email);
+
+        if (email.isEmpty()) {
+            log.error("Change password failed: User not authenticated");
+            throw new RuntimeException("User not authenticated");
+        }
+
+        // Validate new password and confirm password match
+        if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
+            log.error("Change password failed: New password and confirm password do not match for user {}", email);
+            throw new RuntimeException("New password and confirm password do not match");
+        }
+
+        // Get current user
+        User currentUser = this.userService.handleGetUserByUsername(email);
+        if (currentUser == null) {
+            log.error("Change password failed: User not found - {}", email);
+            throw new RuntimeException("User not found");
+        }
+
+        // Verify old password
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(email, changePasswordDTO.getOldPassword());
+            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        } catch (Exception e) {
+            log.error("Change password failed: Old password incorrect for user {}", email);
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        // Update password
+        boolean updated = this.userService.updatePassword(currentUser, changePasswordDTO.getNewPassword());
+        if (!updated) {
+            log.error("Change password failed: Could not update password for user {}", email);
+            throw new RuntimeException("Could not update password");
+        }
+
+        log.info("Password changed successfully for user: {}", email);
+        return RestResponse.ok(null, "Change password successfully");
     }
 }
 

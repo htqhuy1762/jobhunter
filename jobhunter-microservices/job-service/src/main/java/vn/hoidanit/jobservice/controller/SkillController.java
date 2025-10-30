@@ -68,6 +68,15 @@ public class SkillController {
         return RestResponse.ok(result, "Fetch skills successfully");
     }
 
+    @GetMapping("/skills/{id}")
+    public ResponseEntity<RestResponse<Skill>> getById(@PathVariable("id") long id) {
+        Skill skill = this.skillService.fetchSkillById(id);
+        if (skill == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return RestResponse.ok(skill, "Fetch skill by id successfully");
+    }
+
     @DeleteMapping("/skills/{id}")
     @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Void>> delete(@PathVariable("id") long id) {

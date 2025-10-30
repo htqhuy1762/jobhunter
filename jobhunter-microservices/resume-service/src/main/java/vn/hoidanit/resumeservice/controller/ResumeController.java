@@ -23,6 +23,7 @@ import vn.hoidanit.resumeservice.annotation.PageableDefault;
 import vn.hoidanit.resumeservice.annotation.RequireRole;
 import vn.hoidanit.resumeservice.domain.Resume;
 import vn.hoidanit.resumeservice.domain.response.RestResponse;
+import vn.hoidanit.resumeservice.dto.ReqCreateResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResCreateResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResFetchResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResUpdateResumeDTO;
@@ -37,11 +38,20 @@ public class ResumeController {
 
     @PostMapping("/resumes")
     @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
-    public ResponseEntity<RestResponse<ResCreateResumeDTO>> create(@Valid @RequestBody Resume resume) {
-        // Check id exists
-        boolean isIdExist = this.resumeService.checkResumeExistByUserAndJob(resume);
-        if(!isIdExist) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<RestResponse<ResCreateResumeDTO>> create(@Valid @RequestBody ReqCreateResumeDTO reqDto) {
+        // Convert DTO to entity
+        Resume resume = new Resume();
+        resume.setEmail(reqDto.getEmail());
+        resume.setUrl(reqDto.getUrl());
+        resume.setStatus(reqDto.getStatus());
+        resume.setUserId(reqDto.getUser().getId());
+        resume.setJobId(reqDto.getJob().getId());
+
+        // Check if user and job exist
+        boolean isValid = this.resumeService.checkResumeExistByUserAndJob(resume);
+        if(!isValid) {
+            return RestResponse.error(HttpStatus.BAD_REQUEST,
+                "Invalid user or job. Please check userId and jobId.");
         }
 
         // Create resume

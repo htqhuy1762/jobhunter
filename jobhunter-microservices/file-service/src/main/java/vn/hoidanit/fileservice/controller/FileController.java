@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import vn.hoidanit.fileservice.annotation.RateLimit;
 import vn.hoidanit.fileservice.annotation.RequireRole;
 import vn.hoidanit.fileservice.domain.response.RestResponse;
@@ -25,6 +26,7 @@ import vn.hoidanit.fileservice.service.FileService;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Slf4j
 public class FileController {
 
     private final FileService fileService;
@@ -36,8 +38,19 @@ public class FileController {
             @RequestParam(name = "file", required = false) MultipartFile file,
             @RequestParam("folder") String folder) throws Exception {
 
-        String uploadedFileName = this.fileService.uploadFile(file, folder);
-        ResUploadFileDTO res = new ResUploadFileDTO(uploadedFileName, Instant.now());
+        // MinioService returns full path: "resume/filename.pdf"
+        String fullPath = this.fileService.uploadFile(file, folder);
+
+        // Extract only filename without folder prefix for frontend
+        // This allows FE to build URL: /storage/{folder}/{filename}
+        String filenameOnly = fullPath;
+        if (fullPath.startsWith(folder + "/")) {
+            filenameOnly = fullPath.substring((folder + "/").length());
+        }
+
+        log.info("File uploaded: {} (returned to FE as: {})", fullPath, filenameOnly);
+
+        ResUploadFileDTO res = new ResUploadFileDTO(filenameOnly, Instant.now());
         return RestResponse.ok(res, "Upload file successfully");
     }
 
@@ -64,6 +77,53 @@ public class FileController {
                 .contentLength(fileLength)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+
+    /**
+     * RESTful endpoint to serve files by path pattern: /storage/{folder}/{filename}
+     * Example: GET /storage/resume/1234.pdf
+     */
+    @GetMapping("/storage/{folder}/{filename:.+}")
+    @RateLimit(name = "serveFile")
+    public ResponseEntity<Resource> serveFile(
+            @PathVariable("folder") String folder,
+            @PathVariable("filename") String filename,
+            @RequestParam(value = "download", required = false, defaultValue = "false") boolean forceDownload) throws Exception {
+
+        long fileLength = this.fileService.getFileSize(filename, folder);
+        if (fileLength == 0) {
+            throw new RuntimeException("File not found: " + filename);
+        }
+
+        InputStreamResource resource = this.fileService.downloadFile(filename, folder);
+
+        // Determine content type based on file extension
+        String contentType = "application/octet-stream";
+
+        if (filename.endsWith(".pdf")) {
+            contentType = "application/pdf";
+        } else if (filename.endsWith(".png")) {
+            contentType = "image/png";
+        } else if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+            contentType = "image/jpeg";
+        } else if (filename.endsWith(".doc")) {
+            contentType = "application/msword";
+        } else if (filename.endsWith(".docx")) {
+            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+
+        ResponseEntity.BodyBuilder response = ResponseEntity.ok()
+                .contentLength(fileLength)
+                .contentType(MediaType.parseMediaType(contentType));
+
+        // If download parameter is true, force download, otherwise inline (preview in browser)
+        if (forceDownload) {
+            response.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        } else {
+            response.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
+        }
+
+        return response.body(resource);
     }
 
 

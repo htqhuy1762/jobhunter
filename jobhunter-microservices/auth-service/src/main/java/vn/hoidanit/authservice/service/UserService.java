@@ -171,5 +171,15 @@ public class UserService {
             // Token is stored in Redis via TokenService
         }
     }
+
+    public boolean updatePassword(User user, String newPassword) {
+        try {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            this.userRepository.save(user);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
 

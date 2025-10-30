@@ -1,6 +1,7 @@
 package vn.hoidanit.notificationservice.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,6 +25,8 @@ import vn.hoidanit.notificationservice.annotation.RateLimit;
 import vn.hoidanit.notificationservice.annotation.RequireRole;
 import vn.hoidanit.notificationservice.domain.Subscriber;
 import vn.hoidanit.notificationservice.domain.response.RestResponse;
+import vn.hoidanit.notificationservice.dto.ReqCreateSubscriberDTO;
+import vn.hoidanit.notificationservice.dto.ResSubscriberSkillsDTO;
 import vn.hoidanit.notificationservice.service.SubscriberService;
 import vn.hoidanit.notificationservice.util.SecurityUtil;
 
@@ -36,11 +39,22 @@ public class SubscriberController {
 
     @RateLimit(name = "createSubscriber")
     @PostMapping("/subscribers")
-    public ResponseEntity<RestResponse<Subscriber>> create(@Valid @RequestBody Subscriber subscriber) {
+    public ResponseEntity<RestResponse<Subscriber>> create(@Valid @RequestBody ReqCreateSubscriberDTO reqDto) {
         // Check email exists
-        if (this.subscriberService.isExistsByEmail(subscriber.getEmail())) {
+        if (this.subscriberService.isExistsByEmail(reqDto.getEmail())) {
             return ResponseEntity.badRequest().build();
         }
+
+        // Convert DTO to Entity
+        Subscriber subscriber = new Subscriber();
+        subscriber.setEmail(reqDto.getEmail());
+        subscriber.setName(reqDto.getName());
+
+        // Extract skill IDs from array of objects
+        List<Long> skillIds = reqDto.getSkills().stream()
+                .map(ReqCreateSubscriberDTO.SkillRef::getId)
+                .collect(Collectors.toList());
+        subscriber.setSkillIds(skillIds);
 
         Subscriber createdSubscriber = this.subscriberService.create(subscriber);
         return RestResponse.created(createdSubscriber, "Create subscriber successfully");
@@ -74,20 +88,22 @@ public class SubscriberController {
 
     @GetMapping("/subscribers/skills")
     @RequireRole({"ROLE_USER", "ROLE_HR", "ROLE_ADMIN"})
-    public ResponseEntity<RestResponse<List<Long>>> getSubscriberSkills() {
+    public ResponseEntity<RestResponse<ResSubscriberSkillsDTO>> getSubscriberSkills() {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
         log.info("Fetching subscribed skills for user: {}", email);
 
-        Subscriber subscriber = this.subscriberService.findByEmail(email);
+        ResSubscriberSkillsDTO result = this.subscriberService.getSubscriberSkillsDetails(email);
 
-        if (subscriber == null) {
-            log.warn("No subscriber found for user: {}", email);
-            return RestResponse.ok(List.of(), "No subscriber found for current user");
+        if (result == null || result.getSkills().isEmpty()) {
+            log.warn("No subscribed skills found for user: {}", email);
+            return RestResponse.ok(
+                new ResSubscriberSkillsDTO(List.of()),
+                "No subscribed skills found"
+            );
         }
 
-        List<Long> skillIds = subscriber.getSkillIds() != null ? subscriber.getSkillIds() : List.of();
-        log.info("Found {} subscribed skills for user: {}", skillIds.size(), email);
-        return RestResponse.ok(skillIds, "Fetch subscriber skills successfully");
+        log.info("Found {} subscribed skills for user: {}", result.getSkills().size(), email);
+        return RestResponse.ok(result, "Fetch subscriber skills successfully");
     }
 
     @GetMapping("/subscribers/{id}")
