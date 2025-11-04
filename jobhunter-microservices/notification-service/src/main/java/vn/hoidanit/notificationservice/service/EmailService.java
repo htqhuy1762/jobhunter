@@ -2,6 +2,8 @@ package vn.hoidanit.notificationservice.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
@@ -21,6 +23,8 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
+    @CircuitBreaker(name = "emailService", fallbackMethod = "sendSimpleEmailFallback")
+    @Retry(name = "emailService")
     public void sendSimpleEmail(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -36,6 +40,18 @@ public class EmailService {
         }
     }
 
+    /**
+     * Fallback for simple email sending
+     */
+    private void sendSimpleEmailFallback(String to, String subject, String text, Throwable ex) {
+        log.error("Circuit breaker fallback triggered for simple email to {}: {}", to, ex.getMessage());
+        log.debug("Exception type: {}", ex.getClass().getName());
+        // In production, you might want to queue this email for later retry
+        // or send notification to monitoring system
+    }
+
+    @CircuitBreaker(name = "emailService", fallbackMethod = "sendHtmlEmailFallback")
+    @Retry(name = "emailService")
     public void sendHtmlEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -58,6 +74,17 @@ public class EmailService {
             log.error("Failed to send HTML email to {}: {}", to, e.getMessage(), e);
             throw new RuntimeException("Failed to send email", e);
         }
+    }
+
+    /**
+     * Fallback for HTML email sending
+     */
+    private void sendHtmlEmailFallback(String to, String subject, String templateName,
+                                       Map<String, Object> variables, Throwable ex) {
+        log.error("Circuit breaker fallback triggered for HTML email to {}: {}", to, ex.getMessage());
+        log.debug("Exception type: {}", ex.getClass().getName());
+        // In production, you might want to queue this email for later retry
+        // or send notification to monitoring system
     }
 }
 

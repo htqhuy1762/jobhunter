@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import vn.hoidanit.resumeservice.client.JobClient;
-import vn.hoidanit.resumeservice.client.UserClient;
 import vn.hoidanit.resumeservice.domain.Resume;
 import vn.hoidanit.resumeservice.dto.JobDTO;
 import vn.hoidanit.resumeservice.dto.ResCreateResumeDTO;
@@ -28,8 +26,8 @@ import vn.hoidanit.resumeservice.util.SecurityUtil;
 @Slf4j
 public class ResumeService {
     private final ResumeRepository resumeRepository;
-    private final UserClient userClient;
-    private final JobClient jobClient;
+    private final UserFetchService userFetchService;
+    private final JobFetchService jobFetchService;
 
     public Optional<Resume> fetchById(long id) {
         return this.resumeRepository.findById(id);
@@ -41,15 +39,14 @@ public class ResumeService {
             return false;
         }
 
-        // Call other services to validate if user and job exist
         try {
-            UserDTO user = userClient.getUserById(resume.getUserId());
+            UserDTO user = userFetchService.fetchUser(resume.getUserId());
             if (user == null) {
                 log.error("User with id {} not found", resume.getUserId());
                 return false;
             }
 
-            JobDTO job = jobClient.getJobById(resume.getJobId());
+            JobDTO job = jobFetchService.fetchJob(resume.getJobId());
             if (job == null) {
                 log.error("Job with id {} not found", resume.getJobId());
                 return false;
@@ -157,5 +154,6 @@ public class ResumeService {
         result.setResult(listResume);
         return result;
     }
+
 }
 

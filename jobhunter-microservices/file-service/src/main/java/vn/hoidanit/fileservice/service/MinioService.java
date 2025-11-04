@@ -3,6 +3,8 @@ package vn.hoidanit.fileservice.service;
 import io.minio.*;
 import io.minio.errors.*;
 import io.minio.http.Method;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +52,10 @@ public class MinioService {
     }
 
     /**
-     * Upload file to MinIO
+     * Upload file to MinIO with Circuit Breaker and Retry
      */
+    @CircuitBreaker(name = "minioService", fallbackMethod = "uploadFileFallback")
+    @Retry(name = "minioService")
     public String uploadFile(MultipartFile file, String folder) throws Exception {
         String originalFilename = file.getOriginalFilename();
         String extension = originalFilename != null && originalFilename.contains(".")
@@ -76,8 +80,20 @@ public class MinioService {
     }
 
     /**
-     * Download file from MinIO
+     * Fallback method for file upload
+     * IMPORTANT: Parameter must be Throwable, not Exception
      */
+    private String uploadFileFallback(MultipartFile file, String folder, Throwable ex) {
+        log.error("Circuit breaker fallback triggered for file upload: {}", ex.getMessage());
+        log.debug("Exception type: {}", ex.getClass().getName());
+        throw new RuntimeException("MinIO service is currently unavailable. Please try again later.", ex);
+    }
+
+    /**
+     * Download file from MinIO with Circuit Breaker and Retry
+     */
+    @CircuitBreaker(name = "minioService", fallbackMethod = "downloadFileFallback")
+    @Retry(name = "minioService")
     public InputStream downloadFile(String objectName) throws Exception {
         return minioClient.getObject(
                 GetObjectArgs.builder()
@@ -85,6 +101,16 @@ public class MinioService {
                         .object(objectName)
                         .build()
         );
+    }
+
+    /**
+     * Fallback method for file download
+     * IMPORTANT: Parameter must be Throwable, not Exception
+     */
+    private InputStream downloadFileFallback(String objectName, Throwable ex) {
+        log.error("Circuit breaker fallback triggered for file download: {}", ex.getMessage());
+        log.debug("Exception type: {}", ex.getClass().getName());
+        throw new RuntimeException("MinIO service is currently unavailable. Cannot download file.", ex);
     }
 
     /**

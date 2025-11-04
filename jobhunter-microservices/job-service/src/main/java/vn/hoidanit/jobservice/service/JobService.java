@@ -11,11 +11,10 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import vn.hoidanit.jobservice.client.CompanyClient;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.Skill;
-import vn.hoidanit.jobservice.dto.CompanyDTO;
 import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
+import vn.hoidanit.jobservice.dto.ResJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
 import vn.hoidanit.jobservice.repository.JobRepository;
@@ -27,7 +26,7 @@ import vn.hoidanit.jobservice.repository.SkillRepository;
 public class JobService {
     private final JobRepository jobRepository;
     private final SkillRepository skillRepository;
-    private final CompanyClient companyClient;
+    private final CompanyFetchService companyFetchService;
 
     public ResCreateJobDTO create(Job j) {
         // Check Skill
@@ -71,7 +70,7 @@ public class JobService {
     /**
      * Fetch job by ID with company information for display
      */
-    public vn.hoidanit.jobservice.dto.ResJobDTO fetchJobByIdWithCompany(long id) {
+    public ResJobDTO fetchJobByIdWithCompany(long id) {
         Optional<Job> jobOptional = this.jobRepository.findById(id);
         if (!jobOptional.isPresent()) {
             return null;
@@ -154,10 +153,9 @@ public class JobService {
     /**
      * Convert Job entity to ResJobDTO with company information
      */
-    private vn.hoidanit.jobservice.dto.ResJobDTO convertToResJobDTO(Job job) {
-        vn.hoidanit.jobservice.dto.ResJobDTO dto = new vn.hoidanit.jobservice.dto.ResJobDTO();
+    private ResJobDTO convertToResJobDTO(Job job) {
+        ResJobDTO dto = new ResJobDTO();
 
-        // Job basic info
         dto.setId(job.getId());
         dto.setName(job.getName());
         dto.setLocation(job.getLocation());
@@ -173,40 +171,19 @@ public class JobService {
         dto.setCreatedBy(job.getCreatedBy());
         dto.setUpdatedBy(job.getUpdatedBy());
 
-        // Skills
         if (job.getSkills() != null) {
             dto.setSkills(job.getSkills().stream()
                     .map(Skill::getName)
                     .collect(Collectors.toList()));
         }
 
-        // Fetch company data via Feign Client
         if (job.getCompanyId() != null) {
-            try {
-                var companyResponse = companyClient.getCompanyById(job.getCompanyId());
-                if (companyResponse != null && companyResponse.getData() != null) {
-                    CompanyDTO company = companyResponse.getData();
-                    vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo companyInfo =
-                        new vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo();
-                    companyInfo.setId(company.getId());
-                    companyInfo.setName(company.getName());
-                    companyInfo.setLogo(company.getLogo());
-                    dto.setCompany(companyInfo);
-                }
-            } catch (Exception e) {
-                log.warn("Failed to fetch company {} for job {}: {}",
-                         job.getCompanyId(), job.getId(), e.getMessage());
-                // Set minimal company info if fetch fails
-                vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo companyInfo =
-                    new vn.hoidanit.jobservice.dto.ResJobDTO.CompanyInfo();
-                companyInfo.setId(job.getCompanyId());
-                companyInfo.setName("Unknown");
-                companyInfo.setLogo(null);
-                dto.setCompany(companyInfo);
-            }
+            ResJobDTO.CompanyInfo companyInfo = companyFetchService.fetchCompany(job.getCompanyId());
+            dto.setCompany(companyInfo);
         }
 
         return dto;
     }
+
 }
 

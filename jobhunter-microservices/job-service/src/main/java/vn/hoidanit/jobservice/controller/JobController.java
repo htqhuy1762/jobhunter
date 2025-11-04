@@ -24,6 +24,7 @@ import vn.hoidanit.jobservice.annotation.RequireRole;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.response.RestResponse;
 import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
+import vn.hoidanit.jobservice.dto.ResJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
 import vn.hoidanit.jobservice.service.JobService;
@@ -66,8 +67,8 @@ public class JobController {
     }
 
     @GetMapping("/jobs/{id}")
-    public ResponseEntity<RestResponse<vn.hoidanit.jobservice.dto.ResJobDTO>> getJobById(@PathVariable("id") long id) {
-        vn.hoidanit.jobservice.dto.ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
+    public ResponseEntity<RestResponse<ResJobDTO>> getJobById(@PathVariable("id") long id) {
+        ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
         if(jobDTO == null) {
             return ResponseEntity.notFound().build();
         }
@@ -75,13 +76,9 @@ public class JobController {
         return RestResponse.ok(jobDTO, "Fetch job by id successfully");
     }
 
-    /**
-     * Internal endpoint for service-to-service communication
-     * No RBAC check - relies on Gateway Signature for security
-     */
     @GetMapping("/jobs/internal/{id}")
-    public ResponseEntity<RestResponse<vn.hoidanit.jobservice.dto.ResJobDTO>> getJobByIdInternal(@PathVariable("id") long id) {
-        vn.hoidanit.jobservice.dto.ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
+    public ResponseEntity<RestResponse<ResJobDTO>> getJobByIdInternal(@PathVariable("id") long id) {
+        ResJobDTO jobDTO = this.jobService.fetchJobByIdWithCompany(id);
         if(jobDTO == null) {
             return ResponseEntity.notFound().build();
         }
