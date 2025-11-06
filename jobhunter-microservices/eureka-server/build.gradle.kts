@@ -21,6 +21,12 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-server")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
+    // Monitoring
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    // Zipkin tracing
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

@@ -14,13 +14,13 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 
 ✅ **API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
 ✅ **Service Discovery** tự động với Netflix Eureka  
-✅ **RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role 🔐 [**NEW**](./RBAC-SUMMARY.md)  
+✅ **RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role  
+✅ **Distributed Tracing** với Zipkin - Theo dõi request qua nhiều services  
 ✅ **Message Queue** với RabbitMQ cho async communication  
-✅ **Distributed Tracing** với Zipkin  
 ✅ **Resilience Pattern** - Circuit Breaker, Retry, Fallback  
 ✅ **Docker Support** đầy đủ với Docker Compose  
-✅ **Health Checks** và Monitoring với Actuator  
-✅ **Centralized Configuration** với Spring Cloud Config  
+✅ **Health Checks** và Monitoring với Actuator + Prometheus  
+✅ **Object Storage** với MinIO cho file management  
 
 ---
 
@@ -32,6 +32,7 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 - **MySQL** (Port 3306): Database
 - **Redis** (Port 6379): Caching & Rate Limiting
 - **RabbitMQ** (Port 5672/15672): Message Broker for async communication
+- **MinIO** (Port 9000/9001): Object Storage for files
 - **Zipkin** (Port 9411): Distributed Tracing
 
 ### Business Services
@@ -123,7 +124,8 @@ cd company-service && gradlew bootRun
 |---------|-----|-------|
 | **Eureka Dashboard** | http://localhost:8761 | Xem tất cả services đang chạy |
 | **API Gateway** | http://localhost:8080 | Entry point cho tất cả API |
-| **Zipkin Tracing** | http://localhost:9411 | Distributed tracing & performance monitoring |
+| **Zipkin Tracing** | http://localhost:9411 | Distributed tracing & performance monitoring
+| **MinIO Console** | http://localhost:9001 | Object storage management (minioadmin/minioadmin) |
 | **RabbitMQ Management** | http://localhost:15672 | Message queue dashboard (admin/admin123) |
 
 ### Health Checks
@@ -246,12 +248,7 @@ POST   /api/v1/emails/send            # Gửi email (Admin)
 ---
 
 ## 📚 Tài Liệu
-
-- 📖 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Hướng dẫn triển khai chi tiết
-- 🔧 **[build-all.bat](./build-all.bat)** - Script build cho Windows
-- 🔧 **[build-all.sh](./build-all.sh)** - Script build cho Linux/Mac
-- 🏥 **[health-check.bat](./health-check.bat)** - Health check script cho Windows
-- 🏥 **[health-check.sh](./health-check.sh)** - Health check script cho Linux/Mac
+- 🔧 **[build-all-services.bat](./build-all-services.bat)** - Script build
 
 ---
 
@@ -311,92 +308,6 @@ MIT License
 
 **Developed with ❤️ by JobHunter Team**
 
-
-### Notifications
-- POST `/api/v1/subscribers` - Đăng ký nhận thông báo (Public)
-- GET `/api/v1/subscribers` - Danh sách subscribers (Admin)
-- POST `/api/v1/emails/send` - Gửi email (Admin)
-
----
-
-## 🎯 Các Cải Tiến Đã Hoàn Thành
-
-### ✅ Infrastructure
-- [x] API Gateway với Rate Limiting, Circuit Breaker
-- [x] Service Discovery với Netflix Eureka
-- [x] Distributed Tracing với Zipkin
-- [x] Message Queue với RabbitMQ
-- [x] Redis cho caching và rate limiting
-- [x] MySQL database
-
-### ✅ Resilience Patterns
-- [x] Circuit Breaker cho tất cả services
-- [x] Fallback Controllers trong API Gateway
-- [x] Retry mechanism với Resilience4j
-- [x] Rate Limiting per endpoint
-- [x] Health checks tự động
-
-### ✅ Async Communication
-- [x] RabbitMQ configuration
-- [x] Email Queue với Producer/Consumer
-- [x] Message retry mechanism
-- [x] Dead Letter Queue support
-
-### ✅ Docker & Deployment
-- [x] Dockerfile cho từng service
-- [x] Docker Compose orchestration
-- [x] Application profiles (local, docker)
-- [x] Build scripts tự động
-- [x] Environment variables support
-
-### ✅ Monitoring & Observability
-- [x] Spring Boot Actuator endpoints
-- [x] Prometheus metrics
-- [x] Distributed tracing với Zipkin
-- [x] Centralized logging
-- [x] Health indicators
-
----
-
-## 📚 Tài Liệu
-
-- 📖 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Hướng dẫn triển khai chi tiết
-- 🔧 **[build-all.bat](./build-all.bat)** - Script build cho Windows
-- 🔧 **[build-all.sh](./build-all.sh)** - Script build cho Linux/Mac
-
----
-
-## 🛠️ Troubleshooting
-
-### Service không kết nối được Eureka?
-```bash
-# Kiểm tra Eureka logs
-docker-compose logs eureka-server
-
-# Restart Eureka
-docker-compose restart eureka-server
-```
-
-### Gateway trả về 503 Service Unavailable?
-```bash
-# Circuit Breaker có thể đang OPEN, chờ 60s hoặc restart
-docker-compose restart api-gateway
-```
-
-### Email không gửi được?
-```bash
-# Kiểm tra RabbitMQ
-docker-compose logs rabbitmq
-
-# Kiểm tra Notification Service
-docker-compose logs notification-service
-```
-
----
-
-## 🤝 Contributing
-
-Mọi đóng góp đều được chào đón! Vui lòng:
 1. Fork repository
 2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
 3. Commit changes (`git commit -m 'Add some AmazingFeature'`)

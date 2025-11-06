@@ -51,6 +51,12 @@ dependencies {
     // Spring Filter
     implementation("com.turkraft.springfilter:jpa:3.1.7")
 
+    // Monitoring
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    // Zipkin tracing
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
+
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
