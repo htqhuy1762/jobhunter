@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +18,15 @@ import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
 import vn.hoidanit.jobservice.dto.ResJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
+import vn.hoidanit.jobservice.infrastructure.event.DomainEventPublisher;
 import vn.hoidanit.jobservice.repository.JobRepository;
 import vn.hoidanit.jobservice.repository.SkillRepository;
 
+/**
+ * Application Service for Job operations
+ * Orchestrates domain operations and publishes domain events
+ * Now following DDD patterns with event publishing
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,7 +34,12 @@ public class JobService {
     private final JobRepository jobRepository;
     private final SkillRepository skillRepository;
     private final CompanyFetchService companyFetchService;
+    private final DomainEventPublisher eventPublisher;
 
+    /**
+     * Create a new job (DDD pattern with domain events)
+     */
+    @Transactional
     public ResCreateJobDTO create(Job j) {
         // Check Skill
         if (j.getSkills() != null) {
@@ -39,10 +51,16 @@ public class JobService {
         // In microservices, companyId is already set, no need to fetch Company entity
         // The relationship is handled via service communication
 
-        //create job
+        // Create job - domain events will be registered in @PrePersist
         Job currentJob = this.jobRepository.save(j);
 
-        //convert to response
+        // Publish domain events (DDD pattern)
+        eventPublisher.publishAll(currentJob.getDomainEvents());
+        currentJob.clearDomainEvents();
+
+        log.info("Job created with ID: {} - Domain events published", currentJob.getId());
+
+        // Convert to response
         ResCreateJobDTO dto = new ResCreateJobDTO();
         dto.setId(currentJob.getId());
         dto.setName(currentJob.getName());
@@ -78,6 +96,10 @@ public class JobService {
         return convertToResJobDTO(jobOptional.get());
     }
 
+    /**
+     * Update a job (DDD pattern with domain events)
+     */
+    @Transactional
     public ResUpdateJobDTO update(Job j, Job jobInDB) {
         // check skills
         if(j.getSkills() != null) {
@@ -86,12 +108,16 @@ public class JobService {
             jobInDB.setSkills(dbSkills);
         }
 
-        // update correct info
-        jobInDB.setName(j.getName());
-        jobInDB.setLocation(j.getLocation());
-        jobInDB.setSalary(j.getSalary());
-        jobInDB.setQuantity(j.getQuantity());
-        jobInDB.setLevel(j.getLevel());
+        // Use domain method to update (registers domain event)
+        jobInDB.updateInformation(
+            j.getName(),
+            j.getLocation(),
+            j.getSalary(),
+            j.getQuantity(),
+            j.getLevel(),
+            j.getDescription()
+        );
+
         jobInDB.setStartDate(j.getStartDate());
         jobInDB.setEndDate(j.getEndDate());
         jobInDB.setActive(j.isActive());
@@ -99,10 +125,16 @@ public class JobService {
             jobInDB.setCompanyId(j.getCompanyId());
         }
 
-        //update job
+        // Save job
         Job currentJob = this.jobRepository.save(jobInDB);
 
-        //convert to response
+        // Publish domain events (DDD pattern)
+        eventPublisher.publishAll(currentJob.getDomainEvents());
+        currentJob.clearDomainEvents();
+
+        log.info("Job updated with ID: {} - Domain events published", currentJob.getId());
+
+        // Convert to response
         ResUpdateJobDTO dto = new ResUpdateJobDTO();
         dto.setId(currentJob.getId());
         dto.setName(currentJob.getName());

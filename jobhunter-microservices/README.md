@@ -4,7 +4,8 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)](https://spring.io/projects/spring-boot)
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-blue)](https://spring.io/projects/spring-cloud)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
-[![Security](https://img.shields.io/badge/RBAC-Implemented-success)](./RBAC-IMPLEMENTATION.md)
+[![Security](https://img.shields.io/badge/RBAC-Implemented-success)]
+[![DDD](https://img.shields.io/badge/DDD-Implemented-success)]
 
 ## 📖 Tổng Quan
 
@@ -15,6 +16,7 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 ✅ **API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
 ✅ **Service Discovery** tự động với Netflix Eureka  
 ✅ **RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role  
+✅ **DDD (Domain-Driven Design)** - Rich domain model trong Job Service 
 ✅ **Distributed Tracing** với Zipkin - Theo dõi request qua nhiều services  
 ✅ **Message Queue** với RabbitMQ cho async communication  
 ✅ **Resilience Pattern** - Circuit Breaker, Retry, Fallback  
@@ -38,10 +40,19 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 ### Business Services
 - **Auth Service** (Port 8081): Authentication & Authorization, User/Role/Permission Management
 - **Company Service** (Port 8082): Company Management
-- **Job Service** (Port 8083): Job & Skill Management
+- **Job Service** (Port 8083): Job & Skill Management 🆕 **with DDD patterns**
 - **Resume Service** (Port 8084): Resume/CV Management
 - **File Service** (Port 8085): File Upload/Download
 - **Notification Service** (Port 8086): Email & Notification
+
+### 🏛️ DDD Implementation in Job Service 🆕
+
+Job Service demonstrates **Domain-Driven Design** patterns:
+- **Value Objects**: Salary, Location, DateRange
+- **Aggregate Root**: Job with rich business logic
+- **Domain Events**: JobCreated, JobPublished, JobClosed, JobUpdated
+- **Domain Services**: Job matching and validation logic
+- **Event-Driven Architecture**: Domain events for loose coupling
 
 ---
 
