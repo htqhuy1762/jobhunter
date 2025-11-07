@@ -163,7 +163,7 @@ public class JobService {
         Page<Job> pageJob = this.jobRepository.findAll(spec, pageable);
 
         // Enrich jobs with company data
-        List<vn.hoidanit.jobservice.dto.ResJobDTO> enrichedJobs = pageJob.getContent().stream()
+        List<ResJobDTO> enrichedJobs = pageJob.getContent().stream()
                 .map(this::convertToResJobDTO)
                 .collect(Collectors.toList());
 
