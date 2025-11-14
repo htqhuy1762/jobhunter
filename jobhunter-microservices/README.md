@@ -1,4 +1,4 @@
-# 🚀 JobHunter Microservices Architecture
+# JobHunter Microservices Architecture
 
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)](https://spring.io/projects/spring-boot)
@@ -7,26 +7,26 @@
 [![Security](https://img.shields.io/badge/RBAC-Implemented-success)]
 [![DDD](https://img.shields.io/badge/DDD-Implemented-success)]
 
-## 📖 Tổng Quan
+## Tổng Quan
 
 Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến trúc Monolith sang Microservices với đầy đủ các tính năng enterprise-grade.
 
-### ✨ Tính Năng Nổi Bật
+### Tính Năng Nổi Bật
 
-✅ **API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
-✅ **Service Discovery** tự động với Netflix Eureka  
-✅ **RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role  
-✅ **DDD (Domain-Driven Design)** - Rich domain model trong Job Service 
-✅ **Distributed Tracing** với Zipkin - Theo dõi request qua nhiều services  
-✅ **Message Queue** với RabbitMQ cho async communication  
-✅ **Resilience Pattern** - Circuit Breaker, Retry, Fallback  
-✅ **Docker Support** đầy đủ với Docker Compose  
-✅ **Health Checks** và Monitoring với Actuator + Prometheus  
-✅ **Object Storage** với MinIO cho file management  
+**API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
+**Service Discovery** tự động với Netflix Eureka  
+**RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role  
+**DDD (Domain-Driven Design)** - Rich domain model trong Job Service 
+**Distributed Tracing** với Zipkin - Theo dõi request qua nhiều services  
+**Message Queue** với RabbitMQ cho async communication  
+**Resilience Pattern** - Circuit Breaker, Retry, Fallback  
+**Docker Support** đầy đủ với Docker Compose  
+**Health Checks** và Monitoring với Actuator + Prometheus  
+**Object Storage** với MinIO cho file management  
 
 ---
 
-## 🏗️ Kiến Trúc Hệ Thống
+## Kiến Trúc Hệ Thống
 
 ### Infrastructure Services
 - **Eureka Server** (Port 8761): Service Discovery & Registry
@@ -40,12 +40,12 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 ### Business Services
 - **Auth Service** (Port 8081): Authentication & Authorization, User/Role/Permission Management
 - **Company Service** (Port 8082): Company Management
-- **Job Service** (Port 8083): Job & Skill Management 🆕 **with DDD patterns**
+- **Job Service** (Port 8083): Job & Skill Management (with DDD patterns)
 - **Resume Service** (Port 8084): Resume/CV Management
 - **File Service** (Port 8085): File Upload/Download
 - **Notification Service** (Port 8086): Email & Notification
 
-### 🏛️ DDD Implementation in Job Service 🆕
+### DDD Implementation in Job Service
 
 Job Service demonstrates **Domain-Driven Design** patterns:
 - **Value Objects**: Salary, Location, DateRange
@@ -56,7 +56,7 @@ Job Service demonstrates **Domain-Driven Design** patterns:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Bước 1: Chuẩn bị môi trường
 
@@ -105,7 +105,7 @@ docker-compose down -v
 
 ---
 
-## 💻 Development Mode
+## Development Mode
 
 Chạy từng service riêng lẻ để phát triển:
 
@@ -127,7 +127,7 @@ cd company-service && gradlew bootRun
 
 ---
 
-## 🔍 Monitoring & Management
+## Monitoring & Management
 
 ### Dashboards & UIs
 
@@ -154,11 +154,11 @@ curl http://localhost:8080/actuator/prometheus
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 Tất cả requests đi qua API Gateway tại `http://localhost:8080`
 
-### 🔐 Authentication APIs
+### Authentication APIs
 ```http
 POST   /api/v1/auth/register          # Đăng ký tài khoản
 POST   /api/v1/auth/login             # Đăng nhập
@@ -167,7 +167,7 @@ POST   /api/v1/auth/logout            # Đăng xuất
 GET    /api/v1/auth/account           # Thông tin tài khoản
 ```
 
-### 👥 User Management APIs
+### User Management APIs
 ```http
 GET    /api/v1/users                  # Danh sách users (Admin)
 POST   /api/v1/users                  # Tạo user (Admin)
@@ -176,7 +176,7 @@ PUT    /api/v1/users                  # Cập nhật user
 DELETE /api/v1/users/{id}             # Xóa user (Admin)
 ```
 
-### 🏢 Company APIs
+### Company APIs
 ```http
 GET    /api/v1/companies              # Danh sách công ty
 POST   /api/v1/companies              # Tạo công ty (HR)
@@ -185,7 +185,7 @@ PUT    /api/v1/companies              # Cập nhật công ty (HR)
 DELETE /api/v1/companies/{id}         # Xóa công ty (Admin)
 ```
 
-### 💼 Job APIs
+### Job APIs
 ```http
 GET    /api/v1/jobs                   # Danh sách việc làm (Public)
 POST   /api/v1/jobs                   # Đăng tin tuyển dụng (HR)
@@ -195,7 +195,7 @@ DELETE /api/v1/jobs/{id}              # Xóa công việc (HR)
 GET    /api/v1/skills                 # Danh sách kỹ năng
 ```
 
-### 📄 Resume APIs
+### Resume APIs
 ```http
 GET    /api/v1/resumes                # Danh sách CV của user
 POST   /api/v1/resumes                # Nộp hồ sơ ứng tuyển
@@ -204,13 +204,13 @@ PUT    /api/v1/resumes                # Cập nhật hồ sơ
 DELETE /api/v1/resumes/{id}           # Xóa hồ sơ
 ```
 
-### 📁 File APIs
+### File APIs
 ```http
 POST   /api/v1/files/upload           # Upload file
 GET    /api/v1/storage/{filename}     # Download file
 ```
 
-### 📧 Notification APIs
+### Notification APIs
 ```http
 POST   /api/v1/subscribers            # Đăng ký nhận thông báo (Public)
 GET    /api/v1/subscribers            # Danh sách subscribers (Admin)
@@ -219,9 +219,9 @@ POST   /api/v1/emails/send            # Gửi email (Admin)
 
 ---
 
-## 🎯 Các Cải Tiến Đã Hoàn Thành
+## Các Cải Tiến Đã Hoàn Thành
 
-### ✅ Infrastructure
+### Infrastructure
 - [x] API Gateway với Rate Limiting, Circuit Breaker
 - [x] Service Discovery với Netflix Eureka
 - [x] Distributed Tracing với Zipkin
@@ -229,27 +229,27 @@ POST   /api/v1/emails/send            # Gửi email (Admin)
 - [x] Redis cho caching và rate limiting
 - [x] MySQL database
 
-### ✅ Resilience Patterns
+### Resilience Patterns
 - [x] Circuit Breaker cho tất cả services
 - [x] Fallback Controllers trong API Gateway
 - [x] Retry mechanism với Resilience4j
 - [x] Rate Limiting per endpoint
 - [x] Health checks tự động
 
-### ✅ Async Communication
+### Async Communication
 - [x] RabbitMQ configuration
 - [x] Email Queue với Producer/Consumer
 - [x] Message retry mechanism
 - [x] Dead Letter Queue support
 
-### ✅ Docker & Deployment
+### Docker & Deployment
 - [x] Dockerfile cho từng service
 - [x] Docker Compose orchestration
 - [x] Application profiles (local, docker)
 - [x] Build scripts tự động
 - [x] Environment variables support
 
-### ✅ Monitoring & Observability
+### Monitoring & Observability
 - [x] Spring Boot Actuator endpoints
 - [x] Prometheus metrics
 - [x] Distributed tracing với Zipkin
@@ -258,12 +258,12 @@ POST   /api/v1/emails/send            # Gửi email (Admin)
 
 ---
 
-## 📚 Tài Liệu
-- 🔧 **[build-all-services.bat](./build-all-services.bat)** - Script build
+## Tài Liệu
+- **[build-all-services.bat](./build-all-services.bat)** - Script build
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Service không kết nối được Eureka?
 ```bash
@@ -300,7 +300,7 @@ docker-compose restart mysql
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Mọi đóng góp đều được chào đón! Vui lòng:
 1. Fork repository
@@ -311,13 +311,13 @@ Mọi đóng góp đều được chào đón! Vui lòng:
 
 ---
 
-## 📄 License
+## License
 
 MIT License
 
 ---
 
-**Developed with ❤️ by JobHunter Team**
+**Developed with love by JobHunter Team**
 
 1. Fork repository
 2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)

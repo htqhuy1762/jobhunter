@@ -41,11 +41,11 @@ public class DatabaseSeeder {
     @Profile({"dev", "test", "docker"})
     public CommandLineRunner seedData() {
         return args -> {
-            log.info("🌱 JOB SERVICE - Starting database seeding...");
+            log.info("JOB SERVICE - Starting database seeding...");
 
             // Check if data already exists
             if (skillRepository.count() > 0 || jobRepository.count() > 0) {
-                log.info("✅ Skills/Jobs already exist, skipping seeding");
+                log.info("Skills/Jobs already exist, skipping seeding");
                 return;
             }
 
@@ -55,7 +55,7 @@ public class DatabaseSeeder {
             // Create sample jobs
             createJobs();
 
-            log.info("🎉 JOB SERVICE - Database seeding completed successfully!");
+            log.info("JOB SERVICE - Database seeding completed successfully!");
         };
     }
 
@@ -76,9 +76,9 @@ public class DatabaseSeeder {
                 skill.setCreatedBy("system");
                 skill.setCreatedAt(Instant.now());
                 skillRepository.save(skill);
-                log.info("✅ Created skill: {}", skillName);
+                log.info("Created skill: {}", skillName);
             } catch (Exception e) {
-                log.error("❌ Failed to create skill: {} | Error: {}", skillName, e.getMessage());
+                log.error("Failed to create skill: {} | Error: {}", skillName, e.getMessage());
             }
         }
     }
@@ -223,13 +223,13 @@ public class DatabaseSeeder {
                 }
 
                 jobRepository.save(job);
-                log.info("✅ Created job: {} | Location: {} | Level: {} | Skills: {}",
+                log.info("Created job: {} | Location: {} | Level: {} | Skills: {}",
                         name, location, level, skillNames.size());
             } else {
-                log.info("ℹ️ Job already exists: {}", name);
+                log.info("Job already exists: {}", name);
             }
         } catch (Exception e) {
-            log.error("❌ Failed to create job: {} | Error: {}", name, e.getMessage(), e);
+            log.error("Failed to create job: {} | Error: {}", name, e.getMessage(), e);
         }
     }
 }

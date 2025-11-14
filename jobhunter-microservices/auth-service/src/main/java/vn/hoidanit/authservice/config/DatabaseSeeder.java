@@ -42,11 +42,11 @@ public class DatabaseSeeder {
     @Profile({"dev", "test", "docker"})
     public CommandLineRunner seedUsers() {
         return args -> {
-            log.info("🌱 Starting database seeding...");
+            log.info("Starting database seeding...");
 
             // Check if users already exist
             if (userRepository.count() > 0) {
-                log.info("✅ Users already exist, skipping seeding");
+                log.info("Users already exist, skipping seeding");
                 return;
             }
 
@@ -65,7 +65,7 @@ public class DatabaseSeeder {
             admin.setAddress("Hanoi, Vietnam");
             admin.setRole(adminRole);
             userRepository.save(admin);
-            log.info("✅ Created admin user: admin@gmail.com");
+            log.info("Created admin user: admin@gmail.com");
 
             // Seed regular user
             Role userRole = roleRepository.findByName("ROLE_USER");
@@ -82,7 +82,7 @@ public class DatabaseSeeder {
             regularUser.setAddress("Ho Chi Minh, Vietnam");
             regularUser.setRole(userRole);
             userRepository.save(regularUser);
-            log.info("✅ Created regular user: user@gmail.com");
+            log.info("Created regular user: user@gmail.com");
 
             // Seed HR user
             Role hrRole = roleRepository.findByName("ROLE_HR");
@@ -99,9 +99,9 @@ public class DatabaseSeeder {
             hrUser.setAddress("Da Nang, Vietnam");
             hrUser.setRole(hrRole);
             userRepository.save(hrUser);
-            log.info("✅ Created HR user: hr@gmail.com");
+            log.info("Created HR user: hr@gmail.com");
 
-            log.info("🎉 Database seeding completed successfully!");
+            log.info("Database seeding completed successfully!");
         };
     }
 
@@ -114,12 +114,12 @@ public class DatabaseSeeder {
     @Profile("prod")
     public CommandLineRunner seedProductionUsers() {
         return args -> {
-            log.info("🔒 Checking production admin account...");
+            log.info("Checking production admin account...");
 
             // Only create admin if doesn't exist
             User existingAdmin = userRepository.findByEmail("admin@production.com");
             if (existingAdmin != null) {
-                log.info("✅ Production admin already exists");
+                log.info("Production admin already exists");
                 return;
             }
 
@@ -131,7 +131,7 @@ public class DatabaseSeeder {
             String adminPassword = System.getenv("ADMIN_PASSWORD");
             if (adminPassword == null || adminPassword.isEmpty()) {
                 adminPassword = "ChangeMe123!"; // Default fallback
-                log.warn("⚠️  ADMIN_PASSWORD env var not set, using default password!");
+                log.warn("ADMIN_PASSWORD env var not set, using default password!");
             }
 
             User admin = new User();
@@ -141,8 +141,8 @@ public class DatabaseSeeder {
             admin.setRole(adminRole);
             userRepository.save(admin);
 
-            log.info("✅ Production admin created");
-            log.warn("⚠️  Please change the admin password immediately!");
+            log.info("Production admin created");
+            log.warn("Please change the admin password immediately!");
         };
     }
 }

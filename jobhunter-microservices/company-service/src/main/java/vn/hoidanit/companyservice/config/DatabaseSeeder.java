@@ -33,11 +33,11 @@ public class DatabaseSeeder {
     @Profile({"dev", "test", "docker"})
     public CommandLineRunner seedCompanies() {
         return args -> {
-            log.info("🌱 COMPANY SERVICE - Starting database seeding...");
+            log.info("COMPANY SERVICE - Starting database seeding...");
 
             // Check if companies already exist
             if (companyRepository.count() > 0) {
-                log.info("✅ Companies already exist, skipping seeding");
+                log.info("Companies already exist, skipping seeding");
                 return;
             }
 
@@ -98,7 +98,7 @@ public class DatabaseSeeder {
                     "1716688336563-tiki.jpg"
             );
 
-            log.info("🎉 COMPANY SERVICE - Database seeding completed successfully!");
+            log.info("COMPANY SERVICE - Database seeding completed successfully!");
         };
     }
 
@@ -113,9 +113,9 @@ public class DatabaseSeeder {
             company.setCreatedAt(Instant.now());
 
             companyRepository.save(company);
-            log.info("✅ Created company: {}", name);
+            log.info("Created company: {}", name);
         } catch (Exception e) {
-            log.error("❌ Failed to create company: {} | Error: {}", name, e.getMessage());
+            log.error("Failed to create company: {} | Error: {}", name, e.getMessage());
         }
     }
 }

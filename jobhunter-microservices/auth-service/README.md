@@ -5,30 +5,30 @@ Authentication & Authorization Service cho hệ thống JobHunter Microservices.
 ## Chức năng chính
 
 ### 1. Authentication
-- ✅ Login (POST /api/v1/auth/login)
-- ✅ Register (POST /api/v1/auth/register)
-- ✅ Refresh Token (GET /api/v1/auth/refresh)
-- ✅ Logout (POST /api/v1/auth/logout)
-- ✅ Get Account (GET /api/v1/auth/account)
+- Login (POST /api/v1/auth/login)
+- Register (POST /api/v1/auth/register)
+- Refresh Token (GET /api/v1/auth/refresh)
+- Logout (POST /api/v1/auth/logout)
+- Get Account (GET /api/v1/auth/account)
 
 ### 2. User Management
-- ✅ Create User (POST /api/v1/users)
-- ✅ Update User (PUT /api/v1/users)
-- ✅ Delete User (DELETE /api/v1/users/{id})
-- ✅ Get User by ID (GET /api/v1/users/{id})
-- ✅ Get All Users with Pagination (GET /api/v1/users)
+- Create User (POST /api/v1/users)
+- Update User (PUT /api/v1/users)
+- Delete User (DELETE /api/v1/users/{id})
+- Get User by ID (GET /api/v1/users/{id})
+- Get All Users with Pagination (GET /api/v1/users)
 
 ### 3. Role Management
-- ✅ Create Role (POST /api/v1/roles)
-- ✅ Update Role (PUT /api/v1/roles)
-- ✅ Delete Role (DELETE /api/v1/roles/{id})
-- ✅ Get All Roles (GET /api/v1/roles)
+- Create Role (POST /api/v1/roles)
+- Update Role (PUT /api/v1/roles)
+- Delete Role (DELETE /api/v1/roles/{id})
+- Get All Roles (GET /api/v1/roles)
 
 ### 4. Permission Management
-- ✅ Create Permission (POST /api/v1/permissions)
-- ✅ Update Permission (PUT /api/v1/permissions)
-- ✅ Delete Permission (DELETE /api/v1/permissions/{id})
-- ✅ Get All Permissions (GET /api/v1/permissions)
+- Create Permission (POST /api/v1/permissions)
+- Update Permission (PUT /api/v1/permissions)
+- Delete Permission (DELETE /api/v1/permissions/{id})
+- Get All Permissions (GET /api/v1/permissions)
 
 ## Công nghệ sử dụng
 
@@ -117,9 +117,9 @@ Trong microservice này, **Refresh Token được xử lý như sau**:
 
 ### Tại sao phải xóa RT cũ?
 
-✅ **Bảo mật**: Chỉ RT mới nhất hợp lệ, RT cũ bị vô hiệu hóa ngay lập tức
-✅ **Ngăn chặn tấn công**: Nếu RT bị đánh cắp, khi user refresh, RT bị cắp sẽ không dùng được
-✅ **One Token Per User**: Mỗi user chỉ có 1 RT active duy nhất
+**Bảo mật**: Chỉ RT mới nhất hợp lệ, RT cũ bị vô hiệu hóa ngay lập tức
+**Ngăn chặn tấn công**: Nếu RT bị đánh cắp, khi user refresh, RT bị cắp sẽ không dùng được
+**One Token Per User**: Mỗi user chỉ có 1 RT active duy nhất
 
 ## API Endpoints
 
@@ -306,11 +306,11 @@ curl -X POST http://localhost:8081/api/v1/auth/logout \
 
 ## Next Steps
 
-1. ✅ Auth-Service đã hoàn thành
-2. ⏳ Cần tạo database `jobhunter_auth` và chạy service
-3. ⏳ Test integration với API Gateway
-4. ⏳ Migrate dữ liệu từ monolith sang microservice
-5. ⏳ Tạo Company-Service tiếp theo
+1. Auth-Service đã hoàn thành
+2. Cần tạo database `jobhunter_auth` và chạy service
+3. Test integration với API Gateway
+4. Migrate dữ liệu từ monolith sang microservice
+5. Tạo Company-Service tiếp theo
 
 ## Port
 
