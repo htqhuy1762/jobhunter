@@ -18,43 +18,49 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
 
     public Optional<Company> findById(long id) {
-        return this.companyRepository.findById(id);
+        return companyRepository.findById(id);
     }
 
-    public Company handleCreateCompany(Company c) {
-        return this.companyRepository.save(c);
+    public Company createCompany(Company company) {
+        return companyRepository.save(company);
     }
 
-    public ResultPaginationDTO handleGetCompany(Specification<Company> spec, Pageable pageable) {
-        Page<Company> companies = this.companyRepository.findAll(spec, pageable);
-        ResultPaginationDTO rs = new ResultPaginationDTO();
-        ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
-
-        mt.setPage(companies.getNumber() + 1); // Convert back to 1-based for response
-        mt.setPageSize(companies.getSize());
-        mt.setPages(companies.getTotalPages());
-        mt.setTotal(companies.getTotalElements());
-
-        rs.setMeta(mt);
-        rs.setResult(companies.getContent());
-        return rs;
+    public ResultPaginationDTO getAllCompanies(Specification<Company> spec, Pageable pageable) {
+        Page<Company> companyPage = companyRepository.findAll(spec, pageable);
+        return buildPaginationResult(companyPage, companyPage.getContent(), pageable);
     }
 
-    public Company handleUpdateCompany(Company c) {
-        Optional<Company> companyOptional = this.companyRepository.findById(c.getId());
-        if(companyOptional.isPresent()) {
-            Company currentCompany = companyOptional.get();
-            currentCompany.setLogo(c.getLogo());
-            currentCompany.setName(c.getName());
-            currentCompany.setDescription(c.getDescription());
-            currentCompany.setAddress(c.getAddress());
-            return this.companyRepository.save(currentCompany);
-        }
-        return null;
+    public Company updateCompany(Company company) {
+        return companyRepository.findById(company.getId())
+                .map(existingCompany -> {
+                    updateCompanyFields(existingCompany, company);
+                    return companyRepository.save(existingCompany);
+                })
+                .orElse(null);
     }
 
-    public void handleDeleteCompany(long id) {
-        this.companyRepository.deleteById(id);
+    public void deleteCompany(long id) {
+        companyRepository.deleteById(id);
+    }
+
+    private void updateCompanyFields(Company target, Company source) {
+        target.setName(source.getName());
+        target.setLogo(source.getLogo());
+        target.setDescription(source.getDescription());
+        target.setAddress(source.getAddress());
+    }
+
+    private ResultPaginationDTO buildPaginationResult(Page<?> page, Object content, Pageable pageable) {
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        meta.setPage(page.getNumber() + 1);
+        meta.setPageSize(page.getSize());
+        meta.setPages(page.getTotalPages());
+        meta.setTotal(page.getTotalElements());
+
+        ResultPaginationDTO result = new ResultPaginationDTO();
+        result.setMeta(meta);
+        result.setResult(content);
+        return result;
     }
 }
 

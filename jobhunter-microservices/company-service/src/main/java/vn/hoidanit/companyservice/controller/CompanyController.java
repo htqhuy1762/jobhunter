@@ -36,57 +36,42 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class CompanyController {
     private final CompanyService companyService;
 
-    /**
-     * Create new company - Only HR and ADMIN can create companies
-     */
     @PostMapping
     @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Company>> createCompany(@Valid @RequestBody Company reqCompany) {
         log.info("User {} is creating company: {}", SecurityUtil.getCurrentUserInfo(), reqCompany.getName());
-        Company company = this.companyService.handleCreateCompany(reqCompany);
+        Company company = companyService.createCompany(reqCompany);
         return RestResponse.created(company, "Create company successfully");
     }
 
-    /**
-     * Get all companies - Public endpoint (no authentication required via Gateway)
-     */
     @GetMapping
     public ResponseEntity<RestResponse<ResultPaginationDTO>> getCompany(
             @Filter Specification<Company> spec,
             @PageableDefault(page = 1, size = 10, sort = "id", direction = "desc") Pageable pageable) {
 
-        ResultPaginationDTO result = this.companyService.handleGetCompany(spec, pageable);
+        ResultPaginationDTO result = companyService.getAllCompanies(spec, pageable);
         return RestResponse.ok(result, "Fetch companies successfully");
     }
 
-    /**
-     * Get company by ID - Public endpoint
-     */
     @GetMapping("/{id}")
     public ResponseEntity<RestResponse<Company>> getCompanyById(@PathVariable("id") long id) {
-        Optional<Company> company = this.companyService.findById(id);
-        return RestResponse.ok(company.get(), "Fetch company by id successfully");
+        Optional<Company> company = companyService.findById(id);
+        return RestResponse.ok(company.orElse(null), "Fetch company by id successfully");
     }
 
-    /**
-     * Update company - Only HR and ADMIN can update
-     */
     @PutMapping
     @RequireRole({"ROLE_HR", "ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Company>> updateCompany(@Valid @RequestBody Company reqCompany) {
         log.info("User {} is updating company ID: {}", SecurityUtil.getCurrentUserInfo(), reqCompany.getId());
-        Company updatedCompany = this.companyService.handleUpdateCompany(reqCompany);
+        Company updatedCompany = companyService.updateCompany(reqCompany);
         return RestResponse.ok(updatedCompany, "Update company successfully");
     }
 
-    /**
-     * Delete company - Only ADMIN can delete (strict permission)
-     */
     @DeleteMapping("/{id}")
     @RequireRole({"ROLE_ADMIN"})
     public ResponseEntity<RestResponse<Void>> deleteCompany(@PathVariable("id") long id) {
         log.warn("User {} is attempting to delete company ID: {}", SecurityUtil.getCurrentUserInfo(), id);
-        this.companyService.handleDeleteCompany(id);
+        companyService.deleteCompany(id);
         return RestResponse.ok(null, "Delete company successfully");
     }
 }

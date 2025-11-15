@@ -5,7 +5,6 @@
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-blue)](https://spring.io/projects/spring-cloud)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
 [![Security](https://img.shields.io/badge/RBAC-Implemented-success)]
-[![DDD](https://img.shields.io/badge/DDD-Implemented-success)]
 
 ## Tổng Quan
 
@@ -33,26 +32,18 @@ Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến
 - **API Gateway** (Port 8080): Entry point, routing, load balancing, rate limiting
 - **MySQL** (Port 3306): Database
 - **Redis** (Port 6379): Caching & Rate Limiting
-- **RabbitMQ** (Port 5672/15672): Message Broker for async communication
+- **Kafka** (Port 9092): Event streaming platform for async messaging
+- **Zookeeper** (Port 2181): Kafka coordination service
 - **MinIO** (Port 9000/9001): Object Storage for files
 - **Zipkin** (Port 9411): Distributed Tracing
 
 ### Business Services
 - **Auth Service** (Port 8081): Authentication & Authorization, User/Role/Permission Management
 - **Company Service** (Port 8082): Company Management
-- **Job Service** (Port 8083): Job & Skill Management (with DDD patterns)
+- **Job Service** (Port 8083): Job & Skill Management
 - **Resume Service** (Port 8084): Resume/CV Management
 - **File Service** (Port 8085): File Upload/Download
 - **Notification Service** (Port 8086): Email & Notification
-
-### DDD Implementation in Job Service
-
-Job Service demonstrates **Domain-Driven Design** patterns:
-- **Value Objects**: Salary, Location, DateRange
-- **Aggregate Root**: Job with rich business logic
-- **Domain Events**: JobCreated, JobPublished, JobClosed, JobUpdated
-- **Domain Services**: Job matching and validation logic
-- **Event-Driven Architecture**: Domain events for loose coupling
 
 ---
 

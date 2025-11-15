@@ -2,9 +2,10 @@ package vn.hoidanit.notificationservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
-import vn.hoidanit.notificationservice.config.RabbitMQConfig;
+import vn.hoidanit.notificationservice.config.KafkaConfig;
 import vn.hoidanit.notificationservice.dto.EmailMessage;
 
 @Service
@@ -14,10 +15,14 @@ public class EmailConsumerService {
 
     private final EmailService emailService;
 
-    @RabbitListener(queues = RabbitMQConfig.EMAIL_QUEUE)
+    @KafkaListener(
+        topics = KafkaConfig.EMAIL_TOPIC,
+        groupId = "notification-service",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
     public void consumeEmailMessage(EmailMessage emailMessage) {
         try {
-            log.info("Received email message from queue: {}", emailMessage);
+            log.info("Received email message from Kafka topic: {}", emailMessage);
 
             if (emailMessage.isHtml()) {
                 emailService.sendHtmlEmail(
@@ -37,7 +42,8 @@ public class EmailConsumerService {
             log.info("Email sent successfully to: {}", emailMessage.getTo());
         } catch (Exception e) {
             log.error("Failed to send email to {}: {}", emailMessage.getTo(), e.getMessage(), e);
-            throw e; // Re-throw to trigger retry mechanism
+            // Kafka will automatically retry based on consumer configuration
+            throw e;
         }
     }
 }

@@ -192,23 +192,21 @@ public class DatabaseSeeder {
                     .anyMatch(j -> j.getName().equalsIgnoreCase(name));
 
             if (!exists) {
-                // Use DDD factory method to create Job
-                Job job = Job.create(
-                    name,
-                    location,
-                    salary,
-                    quantity,
-                    level,
-                    description,
-                    Instant.now(),
-                    Instant.now().plus(90, ChronoUnit.DAYS), // 3 months from now
-                    companyId
-                );
-
-                // Activate the job
+                Job job = new Job();
+                job.setName(name);
+                job.setLocation(location);
+                job.setSalary(salary);
+                job.setQuantity(quantity);
+                job.setLevel(level);
+                job.setDescription(description);
+                job.setCompanyId(companyId);
                 job.setActive(true);
+                job.setStartDate(Instant.now());
+                job.setEndDate(Instant.now().plus(90, ChronoUnit.DAYS)); // 3 months from now
+                job.setCreatedBy("system");
+                job.setCreatedAt(Instant.now());
 
-                // Find and add skills using domain method
+                // Find and set skills
                 List<Skill> skills = new ArrayList<>();
                 for (String skillName : skillNames) {
                     skillRepository.findAll().stream()
@@ -216,11 +214,7 @@ public class DatabaseSeeder {
                             .findFirst()
                             .ifPresent(skills::add);
                 }
-
-                // Add skills through aggregate
-                for (Skill skill : skills) {
-                    job.addRequiredSkill(skill);
-                }
+                job.setSkills(skills);
 
                 jobRepository.save(job);
                 log.info("Created job: {} | Location: {} | Level: {} | Skills: {}",
