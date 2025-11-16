@@ -28,10 +28,15 @@ public class JobService {
     private final JobRepository jobRepository;
     private final SkillRepository skillRepository;
     private final CompanyFetchService companyFetchService;
+    private final JobEventProducer jobEventProducer;
 
     public ResCreateJobDTO create(Job job) {
         attachSkillsToJob(job);
         Job savedJob = jobRepository.save(job);
+
+        // Publish Kafka event for job alerts
+        jobEventProducer.publishJobCreated(savedJob);
+
         return mapToCreateDTO(savedJob);
     }
 
@@ -148,7 +153,7 @@ public class JobService {
         dto.setUpdatedAt(job.getUpdatedAt());
         dto.setCreatedBy(job.getCreatedBy());
         dto.setUpdatedBy(job.getUpdatedBy());
-        dto.setSkills(extractSkillNames(job));
+        dto.setSkills(extractSkillInfos(job));  // Changed to return objects
 
         if (job.getCompanyId() != null) {
             ResJobDTO.CompanyInfo companyInfo = companyFetchService.fetchCompany(job.getCompanyId());
@@ -156,6 +161,15 @@ public class JobService {
         }
 
         return dto;
+    }
+
+    private List<ResJobDTO.SkillInfo> extractSkillInfos(Job job) {
+        if (job.getSkills() == null) {
+            return Collections.emptyList();
+        }
+        return job.getSkills().stream()
+                .map(skill -> new ResJobDTO.SkillInfo(skill.getId(), skill.getName()))
+                .collect(Collectors.toList());
     }
 
     private List<String> extractSkillNames(Job job) {

@@ -6,13 +6,14 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import vn.hoidanit.jobservice.util.constant.LevelEnum;
+import vn.hoidanit.jobservice.util.constant.LocationEnum;
 
 @Getter
 @Setter
 public class ResUpdateJobDTO {
     private long id;
     private String name;
-    private String location;
+    private LocationEnum location;  // Changed to enum
     private double salary;
     private int quantity;
     private LevelEnum level;

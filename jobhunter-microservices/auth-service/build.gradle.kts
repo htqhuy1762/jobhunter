@@ -35,6 +35,9 @@ dependencies {
     // Spring Cloud
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
 
+    // Kafka for job alerts
+    implementation("org.springframework.kafka:spring-kafka")
+
     // Resilience4j for Rate Limiting
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")

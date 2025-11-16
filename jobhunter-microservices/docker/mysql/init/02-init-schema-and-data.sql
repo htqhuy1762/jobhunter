@@ -237,7 +237,7 @@ USE job_db;
 CREATE TABLE IF NOT EXISTS jobs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    location VARCHAR(255),
+    location ENUM('HANOI', 'HOCHIMINH', 'DANANG', 'OTHER') DEFAULT 'OTHER',
     salary DECIMAL(15,2),
     quantity INT,
     level VARCHAR(50),
@@ -252,7 +252,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     updated_by VARCHAR(255),
     INDEX idx_company_id (company_id),
     INDEX idx_level (level),
-    INDEX idx_active (active)
+    INDEX idx_active (active),
+    INDEX idx_location (location)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS skills (
@@ -307,31 +308,25 @@ CREATE TABLE IF NOT EXISTS resumes (
 SELECT 'Resume DB initialized successfully!' AS status;
 
 -- ========================================
--- NOTIFICATION_DB - Notification Service
+-- FILE_DB - File Service (Optional metadata)
 -- ========================================
-USE notification_db;
+USE file_db;
 
-CREATE TABLE IF NOT EXISTS subscribers (
+CREATE TABLE IF NOT EXISTS file_metadata (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    file_name VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255),
+    file_path VARCHAR(500) NOT NULL,
+    file_size BIGINT,
+    content_type VARCHAR(100),
+    bucket_name VARCHAR(100),
+    uploaded_by VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by VARCHAR(255),
-    updated_by VARCHAR(255),
-    INDEX idx_email (email)
+    INDEX idx_file_name (file_name),
+    INDEX idx_uploaded_by (uploaded_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Subscriber skills mapping table
-CREATE TABLE IF NOT EXISTS subscriber_skill (
-    subscriber_id BIGINT NOT NULL,
-    skill_id BIGINT NOT NULL,
-    PRIMARY KEY (subscriber_id, skill_id),
-    FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE CASCADE,
-    INDEX idx_skill_id (skill_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-SELECT 'Notification DB initialized successfully!' AS status;
+SELECT 'File DB initialized successfully!' AS status;
 
 -- ========================================
 -- SUMMARY
@@ -339,7 +334,14 @@ SELECT 'Notification DB initialized successfully!' AS status;
 SELECT '============================================' AS '';
 SELECT 'ALL MICROSERVICES DATABASES INITIALIZED!' AS 'STATUS';
 SELECT '============================================' AS '';
-SELECT 'Default credentials:' AS '';
+SELECT 'Databases created:' AS '';
+SELECT '  - auth_db (users, roles, permissions, subscribers)' AS '';
+SELECT '  - company_db (companies)' AS '';
+SELECT '  - job_db (jobs, skills)' AS '';
+SELECT '  - resume_db (resumes)' AS '';
+SELECT '  - file_db (file_metadata)' AS '';
+SELECT '============================================' AS '';
+SELECT 'Default credentials (created by app seeder):' AS '';
 SELECT 'Email: admin@gmail.com | Password: 123456' AS 'Admin';
 SELECT 'Email: user@gmail.com | Password: 123456' AS 'User';
 SELECT 'Email: hr@gmail.com | Password: 123456' AS 'HR';

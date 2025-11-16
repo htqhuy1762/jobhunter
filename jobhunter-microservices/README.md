@@ -4,452 +4,322 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)](https://spring.io/projects/spring-boot)
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-blue)](https://spring.io/projects/spring-cloud)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
-[![Security](https://img.shields.io/badge/RBAC-Implemented-success)]
+[![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-purple)](https://kafka.apache.org/)
 
-## Tổng Quan
+## 📋 Tổng Quan
 
-Hệ thống JobHunter đã được **chuyển đổi hoàn toàn** từ kiến trúc Monolith sang Microservices với đầy đủ các tính năng enterprise-grade.
+Hệ thống JobHunter chuyển đổi từ Monolith sang **Microservices** với event-driven architecture.
 
-### Tính Năng Nổi Bật
+### ✨ Tính Năng
 
-**API Gateway** với Rate Limiting, Circuit Breaker, JWT Authentication  
-**Service Discovery** tự động với Netflix Eureka  
-**RBAC (Role-Based Access Control)** - Phân quyền chi tiết theo role  
-**DDD (Domain-Driven Design)** - Rich domain model trong Job Service 
-**Distributed Tracing** với Zipkin - Theo dõi request qua nhiều services  
-**Message Queue** với RabbitMQ cho async communication  
-**Resilience Pattern** - Circuit Breaker, Retry, Fallback  
-**Docker Support** đầy đủ với Docker Compose  
-**Health Checks** và Monitoring với Actuator + Prometheus  
-**Object Storage** với MinIO cho file management  
+- ✅ API Gateway - Routing, Rate Limiting, Circuit Breaker, JWT Authentication  
+- ✅ Service Discovery - Netflix Eureka
+- ✅ RBAC - Role & Permission based authorization
+- ✅ Event-Driven - Kafka messaging  
+- ✅ Service Communication - OpenFeign + Kafka
+- ✅ Distributed Tracing - Zipkin
+- ✅ Resilience Patterns - Circuit Breaker, Retry, Fallback  
+- ✅ Object Storage - MinIO
+- ✅ Monitoring - Actuator + Prometheus + Zipkin
 
 ---
 
-## Kiến Trúc Hệ Thống
+## 🏗️ Kiến Trúc
 
 ### Infrastructure Services
-- **Eureka Server** (Port 8761): Service Discovery & Registry
-- **API Gateway** (Port 8080): Entry point, routing, load balancing, rate limiting
-- **MySQL** (Port 3306): Database
-- **Redis** (Port 6379): Caching & Rate Limiting
-- **Kafka** (Port 9092): Event streaming platform for async messaging
-- **Zookeeper** (Port 2181): Kafka coordination service
-- **MinIO** (Port 9000/9001): Object Storage for files
-- **Zipkin** (Port 9411): Distributed Tracing
+
+| Service | Port | Mô tả |
+|---------|------|-------|
+| **Eureka Server** | 8761 | Service Discovery |
+| **API Gateway** | 8080 | Entry point, routing, authentication |
+| **MySQL** | 3306 | Database (4 DBs tự động tạo) |
+| **Redis** | 6379 | Caching & Rate Limiting |
+| **Kafka** | 9092 | Event streaming |
+| **Zookeeper** | 2181 | Kafka coordination |
+| **MinIO** | 9000/9001 | Object Storage (minioadmin/minioadmin) |
+| **Zipkin** | 9411 | Distributed Tracing |
 
 ### Business Services
-- **Auth Service** (Port 8081): Authentication & Authorization, User/Role/Permission Management
-- **Company Service** (Port 8082): Company Management
-- **Job Service** (Port 8083): Job & Skill Management
-- **Resume Service** (Port 8084): Resume/CV Management
-- **File Service** (Port 8085): File Upload/Download
-- **Notification Service** (Port 8086): Email & Notification
+
+| Service | Port | Database | Mô tả | Kafka |
+|---------|------|----------|-------|-------|
+| **Auth Service** | 8081 | auth_db | User/Role/Permission | - |
+| **Company Service** | 8082 | company_db | Company Management | - |
+| **Job Service** | 8083 | job_db | Job & Skill | Producer + Consumer |
+| **Resume Service** | 8084 | resume_db | Resume/CV | Producer |
+| **File Service** | 8085 | - | File Upload/Download | - |
+| **Notification Service** | 8086 | - | Email | Consumer |
 
 ---
 
-## Quick Start
+## 📨 Event-Driven với Kafka
 
-### Bước 1: Chuẩn bị môi trường
+### Kafka Topics
+
+| Topic | Producer | Consumer | Mô tả |
+|-------|----------|----------|-------|
+| **job-created** | Job Service | Notification Service | Thông báo job mới |
+| **job-applications** | Resume Service | Job Service | Thông báo ứng viên nộp CV |
+| **email-notifications** | Multiple Services | Notification Service | Email queue |
+
+### Communication Patterns
+
+**Synchronous (OpenFeign):**
+```
+Resume Service ──> Job Service (get job details)
+Job Service ──> Company Service (get company info)
+Resume Service ──> Auth Service (get user info)
+```
+
+**Asynchronous (Kafka):**
+```
+Job Service ──> Notification Service (job alerts)
+Resume Service ──> Job Service (application stats)
+Any Service ──> Notification Service (emails)
+```
+
+---
+
+## 🚀 Quick Start
+
+### 1. Chuẩn bị
 
 ```bash
-# Copy file cấu hình môi trường
+# Copy và chỉnh sửa .env
 cp .env.example .env
-
-# Chỉnh sửa .env với thông tin email của bạn
-# MAIL_USERNAME=your-email@gmail.com
-# MAIL_PASSWORD=your-app-password
+# Thêm MAIL_USERNAME và MAIL_PASSWORD
 ```
 
-### Bước 2: Build tất cả services
+**Lấy Gmail App Password:** https://myaccount.google.com/apppasswords
 
-```bash
-# Windows
-build-all.bat
-
-# Linux/Mac
-chmod +x build-all.sh
-./build-all.sh
-```
-
-### Bước 3: Khởi động hệ thống
-
-```bash
-# Khởi động tất cả services
-docker-compose up -d
-
-# Kiểm tra trạng thái
-docker-compose ps
-
-# Xem logs
-docker-compose logs -f
-```
-
-### Bước 4: Dừng hệ thống
-
-```bash
-# Dừng tất cả services
-docker-compose down
-
-# Dừng và xóa volumes
-docker-compose down -v
-```
-
----
-
-## Development Mode
-
-Chạy từng service riêng lẻ để phát triển:
-
-```bash
-# 1. Khởi động infrastructure
-docker-compose up -d mysql redis rabbitmq zipkin
-
-# 2. Chạy Eureka Server
-cd eureka-server && gradlew bootRun
-
-# 3. Chạy API Gateway
-cd api-gateway && gradlew bootRun
-
-# 4. Chạy các business services
-cd auth-service && gradlew bootRun
-cd company-service && gradlew bootRun
-# ... và các services khác
-```
-
----
-
-## Monitoring & Management
-
-### Dashboards & UIs
-
-| Service | URL | Mô tả |
-|---------|-----|-------|
-| **Eureka Dashboard** | http://localhost:8761 | Xem tất cả services đang chạy |
-| **API Gateway** | http://localhost:8080 | Entry point cho tất cả API |
-| **Zipkin Tracing** | http://localhost:9411 | Distributed tracing & performance monitoring
-| **MinIO Console** | http://localhost:9001 | Object storage management (minioadmin/minioadmin) |
-| **RabbitMQ Management** | http://localhost:15672 | Message queue dashboard (admin/admin123) |
-
-### Health Checks
-
-```bash
-# Kiểm tra health của Gateway
-curl http://localhost:8080/actuator/health
-
-# Xem tất cả routes
-curl http://localhost:8080/actuator/gateway/routes
-
-# Xem metrics
-curl http://localhost:8080/actuator/prometheus
-```
-
----
-
-## API Endpoints
-
-Tất cả requests đi qua API Gateway tại `http://localhost:8080`
-
-### Authentication APIs
-```http
-POST   /api/v1/auth/register          # Đăng ký tài khoản
-POST   /api/v1/auth/login             # Đăng nhập
-GET    /api/v1/auth/refresh           # Refresh token
-POST   /api/v1/auth/logout            # Đăng xuất
-GET    /api/v1/auth/account           # Thông tin tài khoản
-```
-
-### User Management APIs
-```http
-GET    /api/v1/users                  # Danh sách users (Admin)
-POST   /api/v1/users                  # Tạo user (Admin)
-GET    /api/v1/users/{id}             # Chi tiết user
-PUT    /api/v1/users                  # Cập nhật user
-DELETE /api/v1/users/{id}             # Xóa user (Admin)
-```
-
-### Company APIs
-```http
-GET    /api/v1/companies              # Danh sách công ty
-POST   /api/v1/companies              # Tạo công ty (HR)
-GET    /api/v1/companies/{id}         # Chi tiết công ty
-PUT    /api/v1/companies              # Cập nhật công ty (HR)
-DELETE /api/v1/companies/{id}         # Xóa công ty (Admin)
-```
-
-### Job APIs
-```http
-GET    /api/v1/jobs                   # Danh sách việc làm (Public)
-POST   /api/v1/jobs                   # Đăng tin tuyển dụng (HR)
-GET    /api/v1/jobs/{id}              # Chi tiết công việc
-PUT    /api/v1/jobs                   # Cập nhật công việc (HR)
-DELETE /api/v1/jobs/{id}              # Xóa công việc (HR)
-GET    /api/v1/skills                 # Danh sách kỹ năng
-```
-
-### Resume APIs
-```http
-GET    /api/v1/resumes                # Danh sách CV của user
-POST   /api/v1/resumes                # Nộp hồ sơ ứng tuyển
-GET    /api/v1/resumes/{id}           # Chi tiết hồ sơ
-PUT    /api/v1/resumes                # Cập nhật hồ sơ
-DELETE /api/v1/resumes/{id}           # Xóa hồ sơ
-```
-
-### File APIs
-```http
-POST   /api/v1/files/upload           # Upload file
-GET    /api/v1/storage/{filename}     # Download file
-```
-
-### Notification APIs
-```http
-POST   /api/v1/subscribers            # Đăng ký nhận thông báo (Public)
-GET    /api/v1/subscribers            # Danh sách subscribers (Admin)
-POST   /api/v1/emails/send            # Gửi email (Admin)
-```
-
----
-
-## Các Cải Tiến Đã Hoàn Thành
-
-### Infrastructure
-- [x] API Gateway với Rate Limiting, Circuit Breaker
-- [x] Service Discovery với Netflix Eureka
-- [x] Distributed Tracing với Zipkin
-- [x] Message Queue với RabbitMQ
-- [x] Redis cho caching và rate limiting
-- [x] MySQL database
-
-### Resilience Patterns
-- [x] Circuit Breaker cho tất cả services
-- [x] Fallback Controllers trong API Gateway
-- [x] Retry mechanism với Resilience4j
-- [x] Rate Limiting per endpoint
-- [x] Health checks tự động
-
-### Async Communication
-- [x] RabbitMQ configuration
-- [x] Email Queue với Producer/Consumer
-- [x] Message retry mechanism
-- [x] Dead Letter Queue support
-
-### Docker & Deployment
-- [x] Dockerfile cho từng service
-- [x] Docker Compose orchestration
-- [x] Application profiles (local, docker)
-- [x] Build scripts tự động
-- [x] Environment variables support
-
-### Monitoring & Observability
-- [x] Spring Boot Actuator endpoints
-- [x] Prometheus metrics
-- [x] Distributed tracing với Zipkin
-- [x] Centralized logging
-- [x] Health indicators
-
----
-
-## Tài Liệu
-- **[build-all-services.bat](./build-all-services.bat)** - Script build
-
----
-
-## Troubleshooting
-
-### Service không kết nối được Eureka?
-```bash
-# Kiểm tra Eureka logs
-docker-compose logs eureka-server
-
-# Restart Eureka
-docker-compose restart eureka-server
-```
-
-### Gateway trả về 503 Service Unavailable?
-```bash
-# Circuit Breaker có thể đang OPEN, chờ 60s hoặc restart
-docker-compose restart api-gateway
-```
-
-### Email không gửi được?
-```bash
-# Kiểm tra RabbitMQ
-docker-compose logs rabbitmq
-
-# Kiểm tra Notification Service
-docker-compose logs notification-service
-```
-
-### Database connection failed?
-```bash
-# Kiểm tra MySQL
-docker-compose exec mysql mysql -uroot -proot -e "SHOW DATABASES;"
-
-# Restart MySQL
-docker-compose restart mysql
-```
-
----
-
-## Contributing
-
-Mọi đóng góp đều được chào đón! Vui lòng:
-1. Fork repository
-2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
-
----
-
-## License
-
-MIT License
-
----
-
-**Developed with love by JobHunter Team**
-
-1. Fork repository
-2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
-# 3. Chạy API Gateway
-cd api-gateway && gradlew bootRun
-
-# 4. Chạy các business services
-cd auth-service && gradlew bootRun
-cd company-service && gradlew bootRun
-# ... và các services khác
-# Tương tự cho các services khác...
-```
-
-### 2. Chạy toàn bộ hệ thống với Docker Compose
+### 2. Build & Run
 
 ```bash
 # Build tất cả services
-cd jobhunter-microservices
+build-all-services.bat
 
-# Build từng service
-cd auth-service && gradlew clean build && cd ..
-cd api-gateway && gradlew clean build && cd ..
-cd company-service && gradlew clean build && cd ..
-cd job-service && gradlew clean build && cd ..
-cd resume-service && gradlew clean build && cd ..
-cd file-service && gradlew clean build && cd ..
-cd notification-service && gradlew clean build && cd ..
-cd eureka-server && gradlew clean build && cd ..
-
-# Chạy docker compose
+# Khởi động
 docker-compose up -d
+
+# Kiểm tra
+docker-compose ps
+docker-compose logs -f
 ```
 
-### 3. Kiểm tra hệ thống
+### 3. Truy cập
 
-- Eureka Dashboard: http://localhost:8761
-- API Gateway: http://localhost:8080
-- Zipkin Tracing: http://localhost:9411
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Eureka** | http://localhost:8761 | - |
+| **API Gateway** | http://localhost:8080 | - |
+| **Zipkin** | http://localhost:9411 | - |
+| **MinIO** | http://localhost:9001 | minioadmin/minioadmin |
 
-## API Endpoints (qua Gateway)
+### 4. Dừng
 
-Tất cả requests đi qua API Gateway tại `http://localhost:8080`
+```bash
+docker-compose down        # Dừng
+docker-compose down -v     # Dừng + xóa data
+```
+
+---
+
+## 💻 Development Mode
+
+```bash
+# Infrastructure
+docker-compose up -d mysql redis kafka zookeeper minio zipkin
+
+# Services (mỗi service một terminal)
+cd eureka-server && gradlew bootRun
+cd api-gateway && gradlew bootRun
+cd auth-service && gradlew bootRun
+cd company-service && gradlew bootRun
+cd job-service && gradlew bootRun
+cd resume-service && gradlew bootRun
+cd file-service && gradlew bootRun
+cd notification-service && gradlew bootRun
+```
+
+---
+
+## 🔌 API Endpoints
+
+Tất cả qua Gateway: `http://localhost:8080`
 
 ### Authentication
-- POST `/api/v1/auth/login` - Login
-- POST `/api/v1/auth/register` - Register
-- GET `/api/v1/auth/refresh` - Refresh token
-- POST `/api/v1/auth/logout` - Logout
+```
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+GET    /api/v1/auth/refresh
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/account
+```
+
+### Users
+```
+GET    /api/v1/users              # Admin
+POST   /api/v1/users              # Admin
+GET    /api/v1/users/{id}
+PUT    /api/v1/users
+DELETE /api/v1/users/{id}         # Admin
+```
 
 ### Companies
-- GET `/api/v1/companies` - List companies
-- POST `/api/v1/companies` - Create company (Admin)
-- GET `/api/v1/companies/{id}` - Get company detail
-- PUT `/api/v1/companies` - Update company (Admin)
-- DELETE `/api/v1/companies/{id}` - Delete company (Admin)
+```
+GET    /api/v1/companies
+POST   /api/v1/companies          # HR
+GET    /api/v1/companies/{id}
+PUT    /api/v1/companies          # HR
+DELETE /api/v1/companies/{id}     # Admin
+```
 
-### Jobs & Skills
-- GET `/api/v1/jobs` - List jobs (Public)
-- POST `/api/v1/jobs` - Create job (Protected)
-- GET `/api/v1/jobs/{id}` - Get job detail
-- PUT `/api/v1/jobs` - Update job (Protected)
-- DELETE `/api/v1/jobs/{id}` - Delete job (Protected)
-- GET `/api/v1/skills` - List skills
+### Jobs
+```
+GET    /api/v1/jobs               # Public
+POST   /api/v1/jobs               # HR
+GET    /api/v1/jobs/{id}
+PUT    /api/v1/jobs               # HR
+DELETE /api/v1/jobs/{id}          # HR
+GET    /api/v1/skills
+POST   /api/v1/skills             # Admin
+```
 
 ### Resumes
-- GET `/api/v1/resumes` - List resumes
-- POST `/api/v1/resumes` - Create resume
-- GET `/api/v1/resumes/{id}` - Get resume detail
-- PUT `/api/v1/resumes` - Update resume
-- DELETE `/api/v1/resumes/{id}` - Delete resume
+```
+GET    /api/v1/resumes
+POST   /api/v1/resumes
+GET    /api/v1/resumes/{id}
+PUT    /api/v1/resumes
+DELETE /api/v1/resumes/{id}
+GET    /api/v1/resumes/by-user
+```
 
 ### Files
-- POST `/api/v1/files/upload` - Upload file
-- GET `/api/v1/files/{filename}` - Download file
+```
+POST   /api/v1/files/upload
+GET    /api/v1/storage/{filename}
+```
 
 ### Notifications
-- POST `/api/v1/subscribers` - Subscribe (Public)
-- GET `/api/v1/subscribers` - List subscribers (Protected)
-
-## Tính năng của Gateway
-
-- **Rate Limiting**: Giới hạn số request/second
-- **Circuit Breaker**: Tự động fallback khi service down
-- **Load Balancing**: Phân tải giữa các instance
-- **CORS Configuration**: Hỗ trợ frontend
-- **JWT Authentication**: Xác thực token
-- **Distributed Tracing**: Theo dõi request qua các services
-
-## Environment Variables
-
-Tạo file `.env` trong thư mục `jobhunter-microservices`:
-
-```env
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+```
+POST   /api/v1/subscribers        # Public
+GET    /api/v1/subscribers        # Admin
+PUT    /api/v1/subscribers
+DELETE /api/v1/subscribers/{id}
 ```
 
-## Monitoring & Observability
+---
 
-- **Health Checks**: Mỗi service có endpoint `/actuator/health`
-- **Metrics**: Prometheus metrics tại `/actuator/prometheus`
-- **Tracing**: Zipkin UI để xem distributed traces
+## 🗄️ Databases
 
-## Kiến trúc Chi tiết
+MySQL tự động tạo 4 databases:
 
-```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │
-       v
-┌──────────────────┐
-│   API Gateway    │ (8080)
-│  Rate Limiting   │
-│ Circuit Breaker  │
-└──────┬───────────┘
-       │
-       v
-┌──────────────────┐
-│  Eureka Server   │ (8761)
-│Service Discovery │
-└──────┬───────────┘
-       │
-       ├─────> Auth Service (8081)
-       ├─────> Company Service (8082)
-       ├─────> Job Service (8083)
-       ├─────> Resume Service (8084)
-       ├─────> File Service (8085)
-       └─────> Notification Service (8086)
-              
-       ┌─────────┐  ┌───────┐
-       │  MySQL  │  │ Redis │
-       └─────────┘  └───────┘
+| Database | Service | Mô tả |
+|----------|---------|-------|
+| **auth_db** | Auth Service | users, roles, permissions, subscribers |
+| **company_db** | Company Service | companies |
+| **job_db** | Job Service | jobs, skills |
+| **resume_db** | Resume Service | resumes |
+
+---
+
+## 🔧 Troubleshooting
+
+### Service không kết nối Eureka
+```bash
+docker-compose logs eureka-server
+docker-compose restart eureka-server
 ```
 
-## Lưu ý
+### Gateway 503 Error
+```bash
+# Kiểm tra Eureka: http://localhost:8761
+docker-compose restart api-gateway
+```
 
-1. Đảm bảo MySQL đã chạy và có database `jobhunter`
-2. Đảm bảo Redis đã được cài đặt và chạy
-3. Các services cần đăng ký với Eureka trước khi Gateway có thể route request
-4. Kiểm tra logs của từng service nếu có lỗi
+### Kafka lỗi
+```bash
+docker-compose logs kafka
+docker-compose restart zookeeper kafka
+```
+
+### Email không gửi
+```bash
+# Kiểm tra .env: MAIL_USERNAME và MAIL_PASSWORD
+docker-compose logs notification-service
+```
+
+### Database lỗi
+```bash
+docker-compose exec mysql mysql -uroot -proot -e "SHOW DATABASES;"
+docker-compose restart mysql
+```
+
+### Debug
+```bash
+docker-compose ps                    # Xem status
+docker-compose logs -f [service]     # Xem logs
+docker stats                         # Resource usage
+curl http://localhost:8080/actuator/health
+```
+
+---
+
+## ⚠️ Lưu Ý
+
+1. **Database**: Tự động tạo 4 DBs, không cần tạo thủ công
+2. **Email**: Bắt buộc config `MAIL_USERNAME` và `MAIL_PASSWORD` trong `.env`
+3. **Startup Order**: Infrastructure → Eureka → Gateway → Services (Docker Compose tự động)
+4. **Ports**: 8080-8086, 8761, 9000-9001, 9092, 9411, 3306, 6379, 2181
+5. **Kafka Topics**: `job-created`, `job-applications`, `email-notifications`
+6. **JWT**: Access 30 phút, Refresh 7 ngày
+7. **Rate Limit**: 100 req/min per IP
+8. **Circuit Breaker**: 5 failures → OPEN → wait 60s
+9. **MinIO Bucket**: `jobhunter-files` (auto-created)
+10. **Health Check**: http://localhost:8761 (kiểm tra services UP)
+
+---
+
+## 🎯 Kiến Trúc
+
+```
+Client → API Gateway (8080) → Eureka (8761) → Services
+                ↓
+         Rate Limiting (Redis)
+         Circuit Breaker
+         JWT Auth
+
+Services:
+Auth (8081) ──┐
+Company (8082)│
+Job (8083) ───┼──> Kafka ──> Notification (8086)
+Resume (8084) │
+File (8085) ──┘
+
+Infrastructure:
+MySQL (auth_db, company_db, job_db, resume_db)
+Redis (cache, rate limiting)
+Kafka + Zookeeper (events)
+MinIO (files)
+Zipkin (tracing)
+```
+
+---
+
+## 📚 Tài Liệu
+
+- [build-all-services.bat](./build-all-services.bat)
+- [docker-compose.yml](./docker-compose.yml)
+- [.env.example](./.env.example)
+- [API Gateway README](./api-gateway/README.md)
+- [Auth Service README](./auth-service/README.md)
+
+---
+
+## 📄 License
+
+MIT License
+
+**Developed with ❤️ by JobHunter Team**
+

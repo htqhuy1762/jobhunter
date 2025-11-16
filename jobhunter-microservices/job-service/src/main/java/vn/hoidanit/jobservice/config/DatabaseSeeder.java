@@ -11,6 +11,7 @@ import vn.hoidanit.jobservice.domain.Skill;
 import vn.hoidanit.jobservice.repository.JobRepository;
 import vn.hoidanit.jobservice.repository.SkillRepository;
 import vn.hoidanit.jobservice.util.constant.LevelEnum;
+import vn.hoidanit.jobservice.util.constant.LocationEnum;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -89,7 +90,7 @@ public class DatabaseSeeder {
         // Job 1: Backend Developer
         createJobIfNotExists(
             "Backend Developer",
-            "Hanoi",
+            LocationEnum.HANOI,
             2000.00,
             5,
             LevelEnum.JUNIOR,
@@ -101,7 +102,7 @@ public class DatabaseSeeder {
         // Job 2: Frontend Developer
         createJobIfNotExists(
             "Frontend Developer",
-            "Ho Chi Minh City",
+            LocationEnum.HOCHIMINH,
             1800.00,
             3,
             LevelEnum.MIDDLE,
@@ -113,7 +114,7 @@ public class DatabaseSeeder {
         // Job 3: Full Stack Developer
         createJobIfNotExists(
             "Full Stack Developer",
-            "Da Nang",
+            LocationEnum.DANANG,
             2500.00,
             2,
             LevelEnum.SENIOR,
@@ -125,7 +126,7 @@ public class DatabaseSeeder {
         // Job 4: DevOps Engineer
         createJobIfNotExists(
             "DevOps Engineer",
-            "Hanoi",
+            LocationEnum.HANOI,
             2800.00,
             2,
             LevelEnum.SENIOR,
@@ -137,7 +138,7 @@ public class DatabaseSeeder {
         // Job 5: Mobile Developer
         createJobIfNotExists(
             "Mobile Developer",
-            "Ho Chi Minh City",
+            LocationEnum.HOCHIMINH,
             2200.00,
             4,
             LevelEnum.MIDDLE,
@@ -149,7 +150,7 @@ public class DatabaseSeeder {
         // Job 6: Python Developer
         createJobIfNotExists(
             "Python Developer",
-            "Hanoi",
+            LocationEnum.HANOI,
             2100.00,
             3,
             LevelEnum.MIDDLE,
@@ -161,7 +162,7 @@ public class DatabaseSeeder {
         // Job 7: Cloud Architect
         createJobIfNotExists(
             "Cloud Architect",
-            "Ho Chi Minh City",
+            LocationEnum.HOCHIMINH,
             3500.00,
             1,
             LevelEnum.SENIOR,
@@ -173,7 +174,7 @@ public class DatabaseSeeder {
         // Job 8: Angular Developer
         createJobIfNotExists(
             "Angular Developer",
-            "Da Nang",
+            LocationEnum.DANANG,
             1900.00,
             3,
             LevelEnum.MIDDLE,
@@ -183,7 +184,7 @@ public class DatabaseSeeder {
         );
     }
 
-    private void createJobIfNotExists(String name, String location, double salary, int quantity,
+    private void createJobIfNotExists(String name, LocationEnum location, double salary, int quantity,
                                       LevelEnum level, String description, Long companyId,
                                       List<String> skillNames) {
         try {
@@ -194,7 +195,7 @@ public class DatabaseSeeder {
             if (!exists) {
                 Job job = new Job();
                 job.setName(name);
-                job.setLocation(location);
+                job.setLocation(location);  // Now LocationEnum
                 job.setSalary(salary);
                 job.setQuantity(quantity);
                 job.setLevel(level);
@@ -218,7 +219,7 @@ public class DatabaseSeeder {
 
                 jobRepository.save(job);
                 log.info("Created job: {} | Location: {} | Level: {} | Skills: {}",
-                        name, location, level, skillNames.size());
+                        name, location.name(), level, skillNames.size());
             } else {
                 log.info("Job already exists: {}", name);
             }

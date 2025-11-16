@@ -14,6 +14,8 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import vn.hoidanit.notificationservice.dto.EmailMessage;
+import vn.hoidanit.notificationservice.dto.JobAlertEvent;
+import vn.hoidanit.notificationservice.dto.ResumeApplicationEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,8 @@ public class KafkaConfig {
 
     public static final String EMAIL_TOPIC = "email-notifications";
     public static final String NOTIFICATION_TOPIC = "general-notifications";
+    public static final String JOB_APPLICATIONS_TOPIC = "job-applications";
+    public static final String JOB_ALERT_EMAILS_TOPIC = "job-alert-emails";
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -69,6 +73,60 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, EmailMessage> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        return factory;
+    }
+
+    // Resume Application Event Consumer Configuration
+    @Bean
+    public ConsumerFactory<String, ResumeApplicationEvent> resumeEventConsumerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service-resume-events");
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ResumeApplicationEvent.class.getName());
+
+        return new DefaultKafkaConsumerFactory<>(
+            configProps,
+            new StringDeserializer(),
+            new JsonDeserializer<>(ResumeApplicationEvent.class, false)
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ResumeApplicationEvent> resumeEventKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, ResumeApplicationEvent> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(resumeEventConsumerFactory());
+        return factory;
+    }
+
+    // Job Alert Event Consumer Configuration
+    @Bean
+    public ConsumerFactory<String, JobAlertEvent> jobAlertEventConsumerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service-job-alerts");
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, JobAlertEvent.class.getName());
+
+        return new DefaultKafkaConsumerFactory<>(
+            configProps,
+            new StringDeserializer(),
+            new JsonDeserializer<>(JobAlertEvent.class, false)
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, JobAlertEvent> jobAlertEventKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, JobAlertEvent> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(jobAlertEventConsumerFactory());
         return factory;
     }
 

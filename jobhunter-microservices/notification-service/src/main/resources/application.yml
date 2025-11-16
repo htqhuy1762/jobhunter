@@ -5,21 +5,6 @@ spring:
   application:
     name: notification-service
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://jobhunter-mysql:3306/jobhunter?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
-
   mail:
     host: smtp.gmail.com
     port: 587

@@ -16,6 +16,7 @@ import vn.hoidanit.resumeservice.dto.JobDTO;
 import vn.hoidanit.resumeservice.dto.ResCreateResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResFetchResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResUpdateResumeDTO;
+import vn.hoidanit.resumeservice.dto.ResumeApplicationEvent;
 import vn.hoidanit.resumeservice.dto.ResultPaginationDTO;
 import vn.hoidanit.resumeservice.dto.UserDTO;
 import vn.hoidanit.resumeservice.repository.ResumeRepository;
@@ -28,6 +29,7 @@ public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final UserFetchService userFetchService;
     private final JobFetchService jobFetchService;
+    private final ResumeEventProducer resumeEventProducer;
 
     public Optional<Resume> fetchById(long id) {
         return this.resumeRepository.findById(id);
@@ -62,23 +64,85 @@ public class ResumeService {
     public ResCreateResumeDTO create(Resume resume) {
         resume = this.resumeRepository.save(resume);
 
+        // Publish Kafka event for async processing
+        publishResumeSubmittedEvent(resume);
+
         ResCreateResumeDTO res = new ResCreateResumeDTO();
         res.setId(resume.getId());
         res.setCreatedAt(resume.getCreatedAt());
         res.setCreatedBy(resume.getCreatedBy());
 
-
         return res;
+    }
+
+    private void publishResumeSubmittedEvent(Resume resume) {
+        try {
+            // Fetch additional info for the event
+            UserDTO user = resume.getUserId() != null ? userFetchService.fetchUser(resume.getUserId()) : null;
+            JobDTO job = resume.getJobId() != null ? jobFetchService.fetchJob(resume.getJobId()) : null;
+
+            ResumeApplicationEvent event = ResumeApplicationEvent.builder()
+                    .resumeId(resume.getId())
+                    .jobId(resume.getJobId())
+                    .userId(resume.getUserId())
+                    .companyId(job != null && job.getCompany() != null ? job.getCompany().getId() : null)
+                    .userEmail(resume.getEmail())
+                    .jobName(job != null ? job.getName() : "Unknown Job")
+                    .companyName(job != null && job.getCompany() != null ? job.getCompany().getName() : "Unknown Company")
+                    .resumeUrl(resume.getUrl())
+                    .build();
+
+            resumeEventProducer.publishResumeSubmittedEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to publish resume submitted event, but resume was saved successfully", e);
+            // Don't fail the request if event publishing fails
+        }
     }
 
     public ResUpdateResumeDTO update(Resume resume) {
         resume = this.resumeRepository.save(resume);
+
+        // Publish event if status changed (APPROVED/REJECTED)
+        if (resume.getStatus() != null) {
+            publishResumeStatusChangeEvent(resume);
+        }
 
         ResUpdateResumeDTO res = new ResUpdateResumeDTO();
         res.setUpdatedAt(resume.getUpdatedAt());
         res.setUpdatedBy(resume.getUpdatedBy());
 
         return res;
+    }
+
+    private void publishResumeStatusChangeEvent(Resume resume) {
+        try {
+            UserDTO user = resume.getUserId() != null ? userFetchService.fetchUser(resume.getUserId()) : null;
+            JobDTO job = resume.getJobId() != null ? jobFetchService.fetchJob(resume.getJobId()) : null;
+
+            ResumeApplicationEvent.EventType eventType = switch (resume.getStatus()) {
+                case APPROVED -> ResumeApplicationEvent.EventType.RESUME_APPROVED;
+                case REJECTED -> ResumeApplicationEvent.EventType.RESUME_REJECTED;
+                default -> null;
+            };
+
+            if (eventType != null) {
+                ResumeApplicationEvent event = ResumeApplicationEvent.builder()
+                        .eventType(eventType)
+                        .resumeId(resume.getId())
+                        .jobId(resume.getJobId())
+                        .userId(resume.getUserId())
+                        .companyId(job != null && job.getCompany() != null ? job.getCompany().getId() : null)
+                        .userEmail(resume.getEmail())
+                        .jobName(job != null ? job.getName() : "Unknown Job")
+                        .companyName(job != null && job.getCompany() != null ? job.getCompany().getName() : "Unknown Company")
+                        .resumeUrl(resume.getUrl())
+                        .build();
+
+                resumeEventProducer.publishResumeStatusChangeEvent(event);
+            }
+        } catch (Exception e) {
+            log.error("Failed to publish resume status change event", e);
+        }
     }
 
     public void delete(long id) {

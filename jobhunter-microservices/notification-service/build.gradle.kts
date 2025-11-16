@@ -16,7 +16,7 @@ extra["springCloudVersion"] = "2023.0.1"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // Removed: spring-boot-starter-data-jpa - notification-service doesn't need database
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -32,11 +32,11 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
     implementation("io.github.resilience4j:resilience4j-retry:2.1.0")
 
-    runtimeOnly("com.mysql:mysql-connector-j")
+    // Removed: mysql-connector-j - no database needed
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
-    implementation("com.turkraft.springfilter:jpa:3.1.7")
+    // Removed: springfilter - was only used for Subscriber queries
 
     // Monitoring
     implementation("io.micrometer:micrometer-registry-prometheus")

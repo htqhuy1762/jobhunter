@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.Setter;
 import vn.hoidanit.jobservice.util.SecurityUtil;
 import vn.hoidanit.jobservice.util.constant.LevelEnum;
+import vn.hoidanit.jobservice.util.constant.LocationEnum;
 
 @Entity
 @Getter
@@ -40,7 +41,8 @@ public class Job {
 
     private String name;
 
-    private String location;
+    @Enumerated(EnumType.STRING)
+    private LocationEnum location;  // Changed to enum
 
     private double salary;
 
