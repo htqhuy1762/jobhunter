@@ -84,6 +84,21 @@ spring:
           filters:
             - JwtAuthenticationFilter
 
+        # Subscriber Service - Public (POST to subscribe)
+        - id: subscriber-service-public
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/subscribers
+            - Method=POST
+
+        # Subscriber Service - Protected (Other operations)
+        - id: subscriber-service-protected
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/subscribers/**
+          filters:
+            - JwtAuthenticationFilter
+
         # Job Service - Public (GET only)
         - id: job-service-public
           uri: lb://job-service
@@ -132,18 +147,11 @@ spring:
           predicates:
             - Path=/storage/**
 
-        # Notification Service - Public
-        - id: notification-service-public
+        # Notification Service - Email endpoints
+        - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/api/v1/subscribers
-            - Method=POST
-
-        # Notification Service - Protected
-        - id: notification-service-protected
-          uri: lb://notification-service
-          predicates:
-            - Path=/api/v1/subscribers/**,/api/v1/emails/**
+            - Path=/api/v1/emails/**
           filters:
             - JwtAuthenticationFilter
 
