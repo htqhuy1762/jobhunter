@@ -12,6 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import vn.hoidanit.jobservice.dto.JobCreatedEvent;
+import vn.hoidanit.jobservice.dto.SkillEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class KafkaProducerConfig {
 
     public static final String JOB_CREATED_TOPIC = "job-created";
+    public static final String SKILL_EVENTS_TOPIC = "skill-events";
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
@@ -48,6 +50,39 @@ public class KafkaProducerConfig {
     @Bean
     public NewTopic jobCreatedTopic() {
         return TopicBuilder.name(JOB_CREATED_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    // ============================================
+    // Skill Event Producer Configuration
+    // ============================================
+
+    @Bean
+    public ProducerFactory<String, SkillEvent> skillEventProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+
+        // Performance tuning
+        configProps.put(ProducerConfig.ACKS_CONFIG, "1");
+        configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, SkillEvent> skillEventKafkaTemplate() {
+        return new KafkaTemplate<>(skillEventProducerFactory());
+    }
+
+    @Bean
+    public NewTopic skillEventsTopic() {
+        return TopicBuilder.name(SKILL_EVENTS_TOPIC)
                 .partitions(3)
                 .replicas(1)
                 .build();

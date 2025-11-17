@@ -66,11 +66,78 @@ CREATE TABLE IF NOT EXISTS permission_role (
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Skills table (Read-only cache/replica of job_db.skills)
+-- This is synchronized from Job Service via Kafka events or scheduled sync
+-- Allows Auth Service to validate skill IDs without calling Job Service
+CREATE TABLE IF NOT EXISTS skills (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Subscribers table (Job alert subscriptions)
+CREATE TABLE IF NOT EXISTS subscribers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    email VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    UNIQUE KEY unique_email (email),
+    UNIQUE KEY unique_user_id (user_id),
+    INDEX idx_email (email),
+    INDEX idx_active (active),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Subscriber-Skill junction table (Which skills subscriber is interested in)
+CREATE TABLE IF NOT EXISTS subscriber_skill (
+    subscriber_id BIGINT NOT NULL,
+    skill_id BIGINT NOT NULL,
+    PRIMARY KEY (subscriber_id, skill_id),
+    FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- Insert default roles
 INSERT INTO roles (name, description, active, created_by) VALUES
 ('ROLE_ADMIN', 'Administrator with full access', TRUE, 'system'),
 ('ROLE_USER', 'Regular user with limited access', TRUE, 'system'),
 ('ROLE_HR', 'HR manager', TRUE, 'system')
+ON DUPLICATE KEY UPDATE name=name;
+
+-- Insert sample skills (Read-only cache from job_db)
+-- These should be synced from Job Service via Kafka events
+-- For initial setup, we insert common skills manually
+INSERT INTO skills (id, name, created_by) VALUES
+(1, 'Java', 'system'),
+(2, 'Spring Boot', 'system'),
+(3, 'JavaScript', 'system'),
+(4, 'React', 'system'),
+(5, 'Angular', 'system'),
+(6, 'Vue.js', 'system'),
+(7, 'Node.js', 'system'),
+(8, 'Python', 'system'),
+(9, 'Django', 'system'),
+(10, 'MySQL', 'system'),
+(11, 'PostgreSQL', 'system'),
+(12, 'MongoDB', 'system'),
+(13, 'Docker', 'system'),
+(14, 'Kubernetes', 'system'),
+(15, 'AWS', 'system'),
+(16, 'Azure', 'system'),
+(17, 'Git', 'system'),
+(18, 'CI/CD', 'system'),
+(19, 'Microservices', 'system'),
+(20, 'REST API', 'system')
 ON DUPLICATE KEY UPDATE name=name;
 
 -- ============================================
@@ -335,7 +402,7 @@ SELECT '============================================' AS '';
 SELECT 'ALL MICROSERVICES DATABASES INITIALIZED!' AS 'STATUS';
 SELECT '============================================' AS '';
 SELECT 'Databases created:' AS '';
-SELECT '  - auth_db (users, roles, permissions, subscribers)' AS '';
+SELECT '  - auth_db (users, roles, permissions, subscribers, subscriber_skill)' AS '';
 SELECT '  - company_db (companies)' AS '';
 SELECT '  - job_db (jobs, skills)' AS '';
 SELECT '  - resume_db (resumes)' AS '';

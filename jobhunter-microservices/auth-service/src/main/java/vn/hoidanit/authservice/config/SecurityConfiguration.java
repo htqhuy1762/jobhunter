@@ -53,6 +53,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                        )
+                )
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(gatewayAuthenticationFilter, BearerTokenAuthenticationFilter.class);
