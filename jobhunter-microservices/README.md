@@ -38,6 +38,10 @@ Hệ thống JobHunter chuyển đổi từ Monolith sang **Microservices** vớ
 | **Zookeeper** | 2181 | Kafka coordination |
 | **MinIO** | 9000/9001 | Object Storage (minioadmin/minioadmin) |
 | **Zipkin** | 9411 | Distributed Tracing |
+| **Prometheus** | 9090 | Metrics Collection |
+| **Loki** | 3100 | Log Aggregation |
+| **Grafana** | 3000 | Monitoring Dashboard (admin/admin) |
+| **Kafka UI** | 8090 | Kafka Management |
 
 ### Business Services
 
@@ -114,6 +118,9 @@ docker-compose logs -f
 | **API Gateway** | http://localhost:8080 | - |
 | **Zipkin** | http://localhost:9411 | - |
 | **MinIO** | http://localhost:9001 | minioadmin/minioadmin |
+| **Grafana** | http://localhost:3000 | admin/admin |
+| **Prometheus** | http://localhost:9090 | - |
+| **Kafka UI** | http://localhost:8090 | - |
 
 ### 4. Dừng
 
@@ -209,6 +216,61 @@ PUT    /api/v1/subscribers
 DELETE /api/v1/subscribers/{id}
 ```
 
+---
+
+## 📊 Monitoring & Observability
+
+Hệ thống tích hợp **Grafana + Prometheus + Loki** để monitoring và logging.
+
+### Dashboards
+
+1. **JobHunter Microservices Overview**
+   - Service health và uptime
+   - Request rate và latency (p95)
+   - Error rate
+   - JVM memory và threads
+   - Database connection pool
+
+2. **JobHunter Logs Dashboard**
+   - Centralized logs từ tất cả services
+   - Log volume by service
+   - Error và warning logs
+   - Searchable với LogQL
+
+3. **JobHunter Resilience Dashboard**
+   - Circuit breaker states
+   - Failure rate
+   - Retry mechanism
+   - Rate limiter metrics
+
+### Access Monitoring
+
+```bash
+# Grafana Dashboard
+http://localhost:3000
+# Login: admin/admin
+# Navigate to Dashboards → Browse
+
+# Prometheus Metrics
+http://localhost:9090
+
+# Example Queries:
+# - Service uptime: up{application="jobhunter"}
+# - Request rate: rate(http_server_requests_seconds_count[1m])
+# - Memory usage: jvm_memory_used_bytes
+
+# Loki Logs (via Grafana Explore)
+# {application="jobhunter", level="ERROR"}
+# {service="job-service"}
+```
+
+### Metrics Endpoints
+
+Mỗi service expose metrics tại `/actuator/prometheus`:
+- http://localhost:8080/actuator/prometheus (API Gateway)
+- http://localhost:8081/actuator/prometheus (Auth)
+- http://localhost:8082/actuator/prometheus (Company)
+- ...
 ---
 
 ## 🗄️ Databases
