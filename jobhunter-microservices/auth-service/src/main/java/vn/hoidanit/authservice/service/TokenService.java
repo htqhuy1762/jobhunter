@@ -15,85 +15,52 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TokenService {
 
-    private final RedisTemplate<String, String> redisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
     private static final String BLACKLIST_TOKEN_PREFIX = "blacklist_token:";
+    private static final long REFRESH_TOKEN_TTL_DAYS = 7;
 
-    /**
-     * Lưu refresh token vào Redis
-     * KEY: refresh_token:{email}
-     * VALUE: {refresh_token}
-     * TTL: 7 days
-     */
+    private final RedisTemplate<String, String> redisTemplate;
+
     public void saveRefreshToken(String email, String refreshToken) {
         String key = REFRESH_TOKEN_PREFIX + email;
-        redisTemplate.opsForValue().set(key, refreshToken, Duration.ofDays(7));
-        log.info("Saved refresh token for user: {}", email);
+        redisTemplate.opsForValue().set(key, refreshToken, Duration.ofDays(REFRESH_TOKEN_TTL_DAYS));
+        log.debug("Saved refresh token for user: {}", email);
     }
 
-    /**
-     * Lấy refresh token từ Redis
-     */
     public Optional<String> getRefreshToken(String email) {
         String key = REFRESH_TOKEN_PREFIX + email;
         String token = redisTemplate.opsForValue().get(key);
         return Optional.ofNullable(token);
     }
 
-    /**
-     * XÓA refresh token cũ khi refresh (QUAN TRỌNG!)
-     */
     public void deleteRefreshToken(String email) {
         String key = REFRESH_TOKEN_PREFIX + email;
         redisTemplate.delete(key);
-        log.info("Deleted refresh token for user: {}", email);
+        log.debug("Deleted refresh token for user: {}", email);
     }
 
-    /**
-     * Validate refresh token
-     */
     public boolean validateRefreshToken(String email, String refreshToken) {
         Optional<String> storedToken = getRefreshToken(email);
         return storedToken.isPresent() && storedToken.get().equals(refreshToken);
     }
 
-    // ========== BLACKLIST ACCESS TOKEN ==========
-
-    /**
-     * Thêm access token vào blacklist
-     * Key format: blacklist_token:token_string
-     * Value: email (để tracking)
-     * TTL: thời gian còn lại của access token
-     */
     public void blacklistAccessToken(String accessToken, String email, long remainingTimeInSeconds) {
         String key = BLACKLIST_TOKEN_PREFIX + accessToken;
-        // Chỉ lưu token vào blacklist trong thời gian token còn hiệu lực
-        // Sau khi token expire tự nhiên, Redis sẽ tự động xóa
         redisTemplate.opsForValue().set(key, email, remainingTimeInSeconds, TimeUnit.SECONDS);
-        log.info("Blacklisted access token for user: {} with TTL: {}s", email, remainingTimeInSeconds);
+        log.debug("Blacklisted access token for user: {} with TTL: {}s", email, remainingTimeInSeconds);
     }
 
-    /**
-     * Kiểm tra access token có trong blacklist không
-     * Trả về true nếu token bị blacklist (không cho phép sử dụng)
-     */
     public boolean isAccessTokenBlacklisted(String accessToken) {
         String key = BLACKLIST_TOKEN_PREFIX + accessToken;
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
-    /**
-     * Xóa token khỏi blacklist (thường không cần dùng vì Redis tự động xóa khi expire)
-     */
     public void removeFromBlacklist(String accessToken) {
         String key = BLACKLIST_TOKEN_PREFIX + accessToken;
         redisTemplate.delete(key);
-        log.info("Removed token from blacklist");
+        log.debug("Removed token from blacklist");
     }
 
-    /**
-     * Lấy thông tin user từ blacklisted token (để tracking/audit)
-     */
     public String getBlacklistedTokenOwner(String accessToken) {
         String key = BLACKLIST_TOKEN_PREFIX + accessToken;
         return redisTemplate.opsForValue().get(key);

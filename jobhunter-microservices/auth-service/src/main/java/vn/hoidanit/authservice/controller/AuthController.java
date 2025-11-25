@@ -32,6 +32,10 @@ import vn.hoidanit.authservice.util.SecurityUtil;
 @Slf4j
 public class AuthController {
 
+    private static final String COOKIE_NAME = "refresh_token";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final int BEARER_PREFIX_LENGTH = 7;
+
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtService jwtService;
     private final UserService userService;
@@ -48,42 +52,23 @@ public class AuthController {
     public ResponseEntity<RestResponse<ResLoginDTO>> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
         log.info("Login attempt for user: {}", loginDTO.getUsername());
 
-        // Check if user exists - LOAD WITH PERMISSIONS
-        User currentUserDB = this.userService.handleGetUserByUsernameWithPermissions(loginDTO.getUsername());
+        User currentUserDB = userService.handleGetUserByUsernameWithPermissions(loginDTO.getUsername());
         if (currentUserDB == null) {
             log.error("Login failed: User not found - {}", loginDTO.getUsername());
             throw new RuntimeException("Invalid username or password");
         }
 
-        // Authenticate
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 loginDTO.getUsername(), loginDTO.getPassword());
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Prepare response
-        ResLoginDTO res = new ResLoginDTO();
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.getRole());
-        res.setUser(userLogin);
-
-        // Create tokens
-        String accessToken = this.jwtService.createAccessToken(authentication.getName(), res);
+        ResLoginDTO res = buildLoginResponse(currentUserDB);
+        String accessToken = jwtService.createAccessToken(authentication.getName(), res);
         res.setAccessToken(accessToken);
 
-        String refreshToken = this.jwtService.createRefreshToken(loginDTO.getUsername(), res);
-        this.tokenService.saveRefreshToken(loginDTO.getUsername(), refreshToken);
-
-        // Set cookie
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .maxAge(refreshTokenExpiration)
-                .build();
+        String refreshToken = jwtService.createRefreshToken(loginDTO.getUsername(), res);
+        tokenService.saveRefreshToken(loginDTO.getUsername(), refreshToken);
 
         log.info("Login successful for user: {}", loginDTO.getUsername());
 
@@ -93,21 +78,20 @@ public class AuthController {
         response.setData(res);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, createRefreshTokenCookie(refreshToken).toString())
                 .body(response);
     }
 
     @GetMapping("/account")
     public ResponseEntity<RestResponse<ResLoginDTO.UserGetAccount>> getAccount() {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
-        log.info("Fetching account info for user: {}", email);
+        log.debug("Fetching account info for user: {}", email);
 
-        User currentUserDB = this.userService.handleGetUserByUsername(email);
-
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
+        User currentUserDB = userService.handleGetUserByUsername(email);
         ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
 
         if (currentUserDB != null) {
+            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
             userLogin.setId(currentUserDB.getId());
             userLogin.setEmail(currentUserDB.getEmail());
             userLogin.setName(currentUserDB.getName());
@@ -120,49 +104,30 @@ public class AuthController {
 
     @GetMapping("/refresh")
     public ResponseEntity<RestResponse<ResLoginDTO>> getRefreshToken(
-            @CookieValue(name = "refresh_token", defaultValue = "abc") String refreshToken) {
+            @CookieValue(name = COOKIE_NAME, defaultValue = "abc") String refreshToken) {
 
-        log.info("Refresh token request received");
+        log.debug("Refresh token request received");
 
-        // Validate refresh token
-        Jwt decodedToken = this.jwtService.checkValidRefreshToken(refreshToken);
+        Jwt decodedToken = jwtService.checkValidRefreshToken(refreshToken);
         String email = decodedToken.getSubject();
 
-        boolean isValid = this.tokenService.validateRefreshToken(email, refreshToken);
-        if (!isValid) {
-            log.error("Refresh token invalid or expired for user: {}", email);
+        if (!tokenService.validateRefreshToken(email, refreshToken)) {
+            log.error("Refresh token invalid for user: {}", email);
             throw new RuntimeException("Refresh token is invalid");
         }
 
-        // Get user info
-        User currentUserDB = this.userService.handleGetUserByUsername(email);
-        ResLoginDTO res = new ResLoginDTO();
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.getRole());
-        res.setUser(userLogin);
+        User currentUserDB = userService.handleGetUserByUsername(email);
+        ResLoginDTO res = buildLoginResponse(currentUserDB);
 
-        // Delete old refresh token
-        this.tokenService.deleteRefreshToken(email);
+        tokenService.deleteRefreshToken(email);
 
-        // Create new tokens
-        String newAccessToken = this.jwtService.createAccessToken(email, res);
+        String newAccessToken = jwtService.createAccessToken(email, res);
         res.setAccessToken(newAccessToken);
 
-        String newRefreshToken = this.jwtService.createRefreshToken(email, res);
-        this.tokenService.saveRefreshToken(email, newRefreshToken);
+        String newRefreshToken = jwtService.createRefreshToken(email, res);
+        tokenService.saveRefreshToken(email, newRefreshToken);
 
-        // Set new cookie
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", newRefreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .maxAge(refreshTokenExpiration)
-                .build();
-
-        log.info("Refresh token successful for user: {}", email);
+        log.debug("Refresh token successful for user: {}", email);
 
         RestResponse<ResLoginDTO> response = new RestResponse<>();
         response.setStatusCode(HttpStatus.OK.value());
@@ -170,45 +135,23 @@ public class AuthController {
         response.setData(res);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, createRefreshTokenCookie(newRefreshToken).toString())
                 .body(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<RestResponse<Void>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<RestResponse<Void>> logout(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
 
-        // Blacklist access token if present
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String accessToken = authHeader.substring(7);
-
-            try {
-                Jwt jwt = this.jwtService.decodeToken(accessToken);
-                long expiresAt = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0;
-                long now = java.time.Instant.now().getEpochSecond();
-                long remainingTime = expiresAt - now;
-
-                if (remainingTime > 0) {
-                    this.tokenService.blacklistAccessToken(accessToken, email, remainingTime);
-                    log.info("Blacklisted access token for user: {}", email);
-                }
-            } catch (Exception e) {
-                log.warn("Could not blacklist access token for user: {}", email);
-            }
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            String accessToken = authHeader.substring(BEARER_PREFIX_LENGTH);
+            blacklistAccessTokenIfValid(accessToken, email);
         }
 
-        // Delete refresh token
-        this.tokenService.deleteRefreshToken(email);
+        tokenService.deleteRefreshToken(email);
         log.info("User logged out: {}", email);
-
-        // Clear cookie
-        ResponseCookie deleteSpringCookie = ResponseCookie
-                .from("refresh_token", "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .maxAge(0)
-                .build();
 
         RestResponse<Void> response = new RestResponse<>();
         response.setStatusCode(HttpStatus.OK.value());
@@ -216,7 +159,7 @@ public class AuthController {
         response.setData(null);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, deleteSpringCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, createDeleteCookie().toString())
                 .body(response);
     }
 
@@ -224,38 +167,19 @@ public class AuthController {
     public ResponseEntity<RestResponse<ResLoginDTO>> register(@Valid @RequestBody User user) {
         log.info("Register attempt for email: {}", user.getEmail());
 
-        // Check if email exists
-        if (this.userService.isEmailExist(user.getEmail())) {
+        if (userService.isEmailExist(user.getEmail())) {
             log.error("Register failed: Email already exists - {}", user.getEmail());
             throw new RuntimeException("Email đã tồn tại");
         }
 
-        // Create user
-        User newUser = this.userService.handleCreateUser(user);
+        User newUser = userService.handleCreateUser(user);
+        ResLoginDTO res = buildLoginResponse(newUser);
 
-        // Auto login after register
-        ResLoginDTO res = new ResLoginDTO();
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                newUser.getId(),
-                newUser.getEmail(),
-                newUser.getName(),
-                newUser.getRole());
-        res.setUser(userLogin);
-
-        // Create tokens
-        String accessToken = this.jwtService.createAccessToken(newUser.getEmail(), res);
+        String accessToken = jwtService.createAccessToken(newUser.getEmail(), res);
         res.setAccessToken(accessToken);
 
-        String refreshToken = this.jwtService.createRefreshToken(newUser.getEmail(), res);
-        this.tokenService.saveRefreshToken(newUser.getEmail(), refreshToken);
-
-        // Set cookie
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .maxAge(refreshTokenExpiration)
-                .build();
+        String refreshToken = jwtService.createRefreshToken(newUser.getEmail(), res);
+        tokenService.saveRefreshToken(newUser.getEmail(), refreshToken);
 
         log.info("Register successful for user: {}", newUser.getEmail());
 
@@ -265,7 +189,7 @@ public class AuthController {
         response.setData(res);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, createRefreshTokenCookie(refreshToken).toString())
                 .body(response);
     }
 
@@ -278,42 +202,84 @@ public class AuthController {
         log.info("Change password request for user: {}", email);
 
         if (email.isEmpty()) {
-            log.error("Change password failed: User not authenticated");
             throw new RuntimeException("User not authenticated");
         }
 
-        // Validate new password and confirm password match
         if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
-            log.error("Change password failed: New password and confirm password do not match for user {}", email);
+            log.error("Change password failed: Passwords do not match for user {}", email);
             throw new RuntimeException("New password and confirm password do not match");
         }
 
-        // Get current user
-        User currentUser = this.userService.handleGetUserByUsername(email);
+        User currentUser = userService.handleGetUserByUsername(email);
         if (currentUser == null) {
-            log.error("Change password failed: User not found - {}", email);
             throw new RuntimeException("User not found");
         }
 
-        // Verify old password
-        try {
-            UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(email, changePasswordDTO.getOldPassword());
-            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        } catch (Exception e) {
-            log.error("Change password failed: Old password incorrect for user {}", email);
-            throw new RuntimeException("Old password is incorrect");
-        }
+        verifyOldPassword(email, changePasswordDTO.getOldPassword());
 
-        // Update password
-        boolean updated = this.userService.updatePassword(currentUser, changePasswordDTO.getNewPassword());
-        if (!updated) {
+        if (!userService.updatePassword(currentUser, changePasswordDTO.getNewPassword())) {
             log.error("Change password failed: Could not update password for user {}", email);
             throw new RuntimeException("Could not update password");
         }
 
         log.info("Password changed successfully for user: {}", email);
         return RestResponse.ok(null, "Change password successfully");
+    }
+
+    private ResLoginDTO buildLoginResponse(User user) {
+        ResLoginDTO res = new ResLoginDTO();
+        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole());
+        res.setUser(userLogin);
+        return res;
+    }
+
+    private ResponseCookie createRefreshTokenCookie(String refreshToken) {
+        return ResponseCookie.from(COOKIE_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(refreshTokenExpiration)
+                .build();
+    }
+
+    private ResponseCookie createDeleteCookie() {
+        return ResponseCookie.from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(0)
+                .build();
+    }
+
+    private void blacklistAccessTokenIfValid(String accessToken, String email) {
+        try {
+            Jwt jwt = jwtService.decodeToken(accessToken);
+            long expiresAt = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0;
+            long now = java.time.Instant.now().getEpochSecond();
+            long remainingTime = expiresAt - now;
+
+            if (remainingTime > 0) {
+                tokenService.blacklistAccessToken(accessToken, email, remainingTime);
+                log.debug("Blacklisted access token for user: {}", email);
+            }
+        } catch (Exception e) {
+            log.warn("Could not blacklist access token for user: {}", email);
+        }
+    }
+
+    private void verifyOldPassword(String email, String oldPassword) {
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(email, oldPassword);
+            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        } catch (Exception e) {
+            log.error("Change password failed: Old password incorrect for user {}", email);
+            throw new RuntimeException("Old password is incorrect");
+        }
     }
 }
 

@@ -4,17 +4,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -31,6 +25,9 @@ import vn.hoidanit.authservice.util.SecurityUtil;
 @RequiredArgsConstructor
 public class JwtService {
 
+    private static final String CLAIM_USER = "user";
+    private static final String CLAIM_PERMISSION = "permission";
+
     private final JwtEncoder jwtEncoder;
 
     @Value("${hoidanit.jwt.base64-secret}")
@@ -42,75 +39,38 @@ public class JwtService {
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-
-    /**
-     * Create Access Token (15 minutes)
-     */
     public String createAccessToken(String email, ResLoginDTO dto) {
-        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
-        userToken.setId(dto.getUser().getId());
-        userToken.setEmail(dto.getUser().getEmail());
-        userToken.setName(dto.getUser().getName());
-
         Instant now = Instant.now();
-        Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
+        Instant validity = now.plus(accessTokenExpiration, ChronoUnit.SECONDS);
 
-        // Permissions - Handle null/lazy loading safely
-        List<String> listAuthority = new ArrayList<>();
-        try {
-            if (dto.getUser().getRole() != null) {
-                // Add role name first (e.g., ROLE_ADMIN, ROLE_HR, ROLE_USER)
-                if (dto.getUser().getRole().getName() != null) {
-                    listAuthority.add(dto.getUser().getRole().getName());
-                }
-
-                // Then add all permissions
-                if (dto.getUser().getRole().getPermissions() != null) {
-                    dto.getUser().getRole().getPermissions().forEach(permission -> {
-                        if (permission != null && permission.getName() != null) {
-                            listAuthority.add(permission.getName());
-                        }
-                    });
-                }
-            }
-        } catch (Exception e) {
-            // Handle LazyInitializationException or any other exception
-            // Continue with empty permissions list
-        }
+        ResLoginDTO.UserInsideToken userToken = createUserToken(dto);
+        List<String> authorities = extractAuthorities(dto);
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
-                .claim("user", userToken)
-                .claim("permission", listAuthority)
+                .claim(CLAIM_USER, userToken)
+                .claim(CLAIM_PERMISSION, authorities)
                 .build();
 
-        JwsHeader jwsHeader = JwsHeader.with(SecurityUtil.JWT_ALGORITHM).build();
-        return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+        return encodeToken(claims);
     }
 
-    /**
-     * Create Refresh Token (7 days)
-     */
     public String createRefreshToken(String email, ResLoginDTO dto) {
-        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
-        userToken.setId(dto.getUser().getId());
-        userToken.setEmail(dto.getUser().getEmail());
-        userToken.setName(dto.getUser().getName());
-
         Instant now = Instant.now();
-        Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
+        Instant validity = now.plus(refreshTokenExpiration, ChronoUnit.SECONDS);
+
+        ResLoginDTO.UserInsideToken userToken = createUserToken(dto);
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
-                .claim("user", userToken)
+                .claim(CLAIM_USER, userToken)
                 .build();
 
-        JwsHeader jwsHeader = JwsHeader.with(SecurityUtil.JWT_ALGORITHM).build();
-        return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+        return encodeToken(claims);
     }
 
     public Jwt checkValidRefreshToken(String token) {
@@ -125,6 +85,43 @@ public class JwtService {
         } catch (Exception e) {
             throw new RuntimeException("Token invalid");
         }
+    }
+
+    private ResLoginDTO.UserInsideToken createUserToken(ResLoginDTO dto) {
+        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
+        userToken.setId(dto.getUser().getId());
+        userToken.setEmail(dto.getUser().getEmail());
+        userToken.setName(dto.getUser().getName());
+        return userToken;
+    }
+
+    private List<String> extractAuthorities(ResLoginDTO dto) {
+        List<String> authorities = new ArrayList<>();
+
+        try {
+            if (dto.getUser().getRole() != null) {
+                if (dto.getUser().getRole().getName() != null) {
+                    authorities.add(dto.getUser().getRole().getName());
+                }
+
+                if (dto.getUser().getRole().getPermissions() != null) {
+                    dto.getUser().getRole().getPermissions().forEach(permission -> {
+                        if (permission != null && permission.getName() != null) {
+                            authorities.add(permission.getName());
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {
+            // Handle LazyInitializationException - continue with current authorities
+        }
+
+        return authorities;
+    }
+
+    private String encodeToken(JwtClaimsSet claims) {
+        JwsHeader jwsHeader = JwsHeader.with(SecurityUtil.JWT_ALGORITHM).build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
     private SecretKey getSecretKey() {

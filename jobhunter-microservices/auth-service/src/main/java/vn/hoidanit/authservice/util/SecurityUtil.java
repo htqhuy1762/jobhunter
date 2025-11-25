@@ -14,6 +14,10 @@ public class SecurityUtil {
     public static final String AUTHORITIES_KEY = "permission";
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
+    private SecurityUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     /**
      * Get current logged in user's email
      */

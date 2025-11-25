@@ -24,6 +24,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String HEADER_GATEWAY_SIGNATURE = "X-Gateway-Signature";
+    private static final String HEADER_GATEWAY_TIMESTAMP = "X-Gateway-Timestamp";
+    private static final String HEADER_USER_ID = "X-User-Id";
+    private static final String HEADER_USER_EMAIL = "X-User-Email";
+    private static final String HEADER_USER_ROLES = "X-User-Roles";
+    private static final String HMAC_SHA256 = "HmacSHA256";
+
     @Value("${gateway.signature.secret}")
     private String gatewaySignatureSecret;
 
@@ -34,43 +41,38 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Check if request comes from Gateway (has X-Gateway-Signature header)
-        String gatewaySignature = request.getHeader("X-Gateway-Signature");
-        String gatewayTimestamp = request.getHeader("X-Gateway-Timestamp");
-        String userId = request.getHeader("X-User-Id");
-        String userEmail = request.getHeader("X-User-Email");
-        String userRoles = request.getHeader("X-User-Roles");
+        String gatewaySignature = request.getHeader(HEADER_GATEWAY_SIGNATURE);
+        String gatewayTimestamp = request.getHeader(HEADER_GATEWAY_TIMESTAMP);
+        String userId = request.getHeader(HEADER_USER_ID);
+        String userEmail = request.getHeader(HEADER_USER_EMAIL);
+        String userRoles = request.getHeader(HEADER_USER_ROLES);
 
-        // If Gateway signature exists and is enabled, validate it
         if (gatewaySignature != null && gatewayTimestamp != null && gatewaySignatureEnabled) {
-            log.debug("Request from Gateway detected, validating Gateway signature");
+            log.debug("Validating Gateway signature for user: {}", userEmail);
 
-            // Validate Gateway signature
             String signatureData = createSignatureData(userId, userEmail, gatewayTimestamp);
             String expectedSignature = generateSignature(signatureData, gatewaySignatureSecret);
 
             if (gatewaySignature.equals(expectedSignature)) {
-                log.debug("Gateway signature validated successfully for user: {}", userEmail);
+                log.debug("Gateway signature validated for user: {}", userEmail);
 
                 List<SimpleGrantedAuthority> authorities = parseAuthorities(userRoles);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("User authenticated via Gateway: {} with roles: {}", userEmail, userRoles);
 
-                // Skip remaining filters (including JWT validation) - trust Gateway
                 filterChain.doFilter(request, response);
                 return;
             } else {
-                log.error("Invalid Gateway signature! Request rejected.");
+                log.error("Invalid Gateway signature - request rejected");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
                 response.getWriter().write("{\"error\": \"Invalid Gateway signature\"}");
                 return;
             }
         }
 
-        // Continue filter chain for other requests (direct calls with JWT)
         filterChain.doFilter(request, response);
     }
 
@@ -80,8 +82,8 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
     private String generateSignature(String data, String secret) {
         try {
-            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            Mac sha256Hmac = Mac.getInstance(HMAC_SHA256);
+            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_SHA256);
             sha256Hmac.init(secretKey);
             byte[] hash = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return java.util.Base64.getEncoder().encodeToString(hash);
