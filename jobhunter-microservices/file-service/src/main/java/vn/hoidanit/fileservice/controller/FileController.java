@@ -96,27 +96,12 @@ public class FileController {
         }
 
         InputStreamResource resource = this.fileService.downloadFile(filename, folder);
-
-        // Determine content type based on file extension
-        String contentType = "application/octet-stream";
-
-        if (filename.endsWith(".pdf")) {
-            contentType = "application/pdf";
-        } else if (filename.endsWith(".png")) {
-            contentType = "image/png";
-        } else if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
-            contentType = "image/jpeg";
-        } else if (filename.endsWith(".doc")) {
-            contentType = "application/msword";
-        } else if (filename.endsWith(".docx")) {
-            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        }
+        String contentType = determineContentType(filename);
 
         ResponseEntity.BodyBuilder response = ResponseEntity.ok()
                 .contentLength(fileLength)
                 .contentType(MediaType.parseMediaType(contentType));
 
-        // If download parameter is true, force download, otherwise inline (preview in browser)
         if (forceDownload) {
             response.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
         } else {
@@ -126,6 +111,20 @@ public class FileController {
         return response.body(resource);
     }
 
+    private String determineContentType(String filename) {
+        if (filename.endsWith(".pdf")) {
+            return "application/pdf";
+        } else if (filename.endsWith(".png")) {
+            return "image/png";
+        } else if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (filename.endsWith(".doc")) {
+            return "application/msword";
+        } else if (filename.endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+        return "application/octet-stream";
+    }
 
     public static record ResUploadFileDTO(String fileName, Instant uploadedAt) {}
 }
