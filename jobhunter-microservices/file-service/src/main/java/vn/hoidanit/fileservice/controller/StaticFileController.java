@@ -33,17 +33,13 @@ public class StaticFileController {
             @PathVariable String folder,
             @PathVariable String fileName) throws Exception {
 
-        // Check if file exists and get size
         long fileLength = this.fileService.getFileSize(fileName, folder);
         if (fileLength == 0) {
             throw new RuntimeException("File with the name = " + fileName + " not found");
         }
 
-        // Download file from MinIO
         InputStreamResource resource = this.fileService.downloadFile(fileName, folder);
-
-        // Determine content type based on file extension
-        String contentType = getContentType(fileName);
+        String contentType = determineContentType(fileName);
 
         return ResponseEntity.ok()
                 .contentLength(fileLength)
@@ -51,20 +47,23 @@ public class StaticFileController {
                 .body(resource);
     }
 
-    /**
-     * Determine content type based on file extension
-     */
-    private String getContentType(String fileName) {
-        String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-        return switch (extension) {
-            case "jpg", "jpeg" -> "image/jpeg";
-            case "png" -> "image/png";
-            case "gif" -> "image/gif";
-            case "pdf" -> "application/pdf";
-            case "doc" -> "application/msword";
-            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            default -> "application/octet-stream";
-        };
+    private String determineContentType(String fileName) {
+        String lowerFileName = fileName.toLowerCase();
+
+        if (lowerFileName.endsWith(".pdf")) {
+            return "application/pdf";
+        } else if (lowerFileName.endsWith(".png")) {
+            return "image/png";
+        } else if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (lowerFileName.endsWith(".gif")) {
+            return "image/gif";
+        } else if (lowerFileName.endsWith(".doc")) {
+            return "application/msword";
+        } else if (lowerFileName.endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+        return "application/octet-stream";
     }
 }
 
