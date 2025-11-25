@@ -162,7 +162,7 @@ spring:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:jobhunter-redis}
       port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_REDIS_PASSWORD:}  # Empty for local Redis without password
+      password: ${SPRING_REDIS_PASSWORD:}
       timeout: 2000ms
       lettuce:
         pool:
@@ -170,11 +170,6 @@ spring:
           max-idle: 8
           min-idle: 0
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://auth-service:8081
 
 # Gateway Security Configuration
 gateway:

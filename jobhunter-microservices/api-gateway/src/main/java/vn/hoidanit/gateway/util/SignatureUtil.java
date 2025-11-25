@@ -14,6 +14,10 @@ public class SignatureUtil {
 
     private static final String HMAC_SHA256 = "HmacSHA256";
 
+    private SignatureUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static String generateSignature(String data, String secret) {
         try {
             Mac mac = Mac.getInstance(HMAC_SHA256);

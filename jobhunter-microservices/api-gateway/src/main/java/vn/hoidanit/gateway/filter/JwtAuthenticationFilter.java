@@ -19,10 +19,24 @@ import vn.hoidanit.gateway.util.SignatureUtil;
 
 import javax.crypto.SecretKey;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
 public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
+
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final int BEARER_PREFIX_LENGTH = 7;
+    private static final String HEADER_USER_ID = "X-User-Id";
+    private static final String HEADER_USER_EMAIL = "X-User-Email";
+    private static final String HEADER_USER_ROLES = "X-User-Roles";
+    private static final String HEADER_GATEWAY_SIGNATURE = "X-Gateway-Signature";
+    private static final String HEADER_GATEWAY_TIMESTAMP = "X-Gateway-Timestamp";
+
+    private static final String CLAIM_USER = "user";
+    private static final String CLAIM_PERMISSION = "permission";
+    private static final String USER_ID_KEY = "id";
 
     @Value("${hoidanit.jwt.base64-secret}")
     private String jwtSecret;
@@ -43,64 +57,28 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             ServerHttpRequest request = exchange.getRequest();
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
                 return onError(exchange, "Missing or invalid Authorization header", HttpStatus.UNAUTHORIZED);
             }
 
-            String token = authHeader.substring(7);
+            String token = authHeader.substring(BEARER_PREFIX_LENGTH);
 
             try {
-                byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
-                SecretKey key = Keys.hmacShaKeyFor(keyBytes);
-                Claims claims = Jwts.parser()
-                        .verifyWith(key)
-                        .build()
-                        .parseSignedClaims(token)
-                        .getPayload();
-
-                final String email = claims.getSubject();
-                Object userObj = claims.get("user");
-
-                final String userId;
-                if (userObj instanceof java.util.Map) {
-                    @SuppressWarnings("unchecked")
-                    java.util.Map<String, Object> userMap = (java.util.Map<String, Object>) userObj;
-                    Object idObj = userMap.get("id");
-                    userId = idObj != null ? String.valueOf(idObj) : null;
-                } else {
-                    userId = null;
-                }
-
-                Object permissionsObj = claims.get("permission");
-                final String roles;
-                if (permissionsObj instanceof java.util.List) {
-                    @SuppressWarnings("unchecked")
-                    java.util.List<String> permissions = (java.util.List<String>) permissionsObj;
-                    roles = String.join(",", permissions);
-                } else {
-                    roles = "";
-                }
+                Claims claims = parseToken(token);
+                String email = claims.getSubject();
+                String userId = extractUserId(claims);
+                String roles = extractRoles(claims);
 
                 return tokenBlacklistService.isAccessTokenBlacklisted(token)
                         .flatMap(isBlacklisted -> {
                             if (Boolean.TRUE.equals(isBlacklisted)) {
-                                log.warn("Token is blacklisted: {}", email);
+                                log.warn("Blacklisted token attempt for user: {}", email);
                                 return onError(exchange, "Token has been revoked. Please login again.", HttpStatus.UNAUTHORIZED);
                             }
 
-                            long timestamp = System.currentTimeMillis();
-                            String signatureData = SignatureUtil.createSignatureData(userId, email, timestamp);
-                            String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
-                            
-                            ServerHttpRequest modifiedRequest = request.mutate()
-                                    .header("X-User-Id", userId)
-                                    .header("X-User-Email", email)
-                                    .header("X-User-Roles", roles)
-                                    .header("X-Gateway-Signature", signature)
-                                    .header("X-Gateway-Timestamp", String.valueOf(timestamp))
-                                    .build();
+                            ServerHttpRequest modifiedRequest = buildAuthenticatedRequest(request, userId, email, roles);
+                            log.debug("JWT validated for user: {} (roles: {})", email, roles);
 
-                            log.info("JWT validated for user: {} (roles: {})", email, roles);
                             return chain.filter(exchange.mutate().request(modifiedRequest).build());
                         });
 
@@ -109,6 +87,51 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 return onError(exchange, "Invalid or expired token", HttpStatus.UNAUTHORIZED);
             }
         };
+    }
+
+    private Claims parseToken(String token) {
+        byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private String extractUserId(Claims claims) {
+        Object userObj = claims.get(CLAIM_USER);
+        if (userObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> userMap = (Map<String, Object>) userObj;
+            Object idObj = userMap.get(USER_ID_KEY);
+            return idObj != null ? String.valueOf(idObj) : null;
+        }
+        return null;
+    }
+
+    private String extractRoles(Claims claims) {
+        Object permissionsObj = claims.get(CLAIM_PERMISSION);
+        if (permissionsObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> permissions = (List<String>) permissionsObj;
+            return String.join(",", permissions);
+        }
+        return "";
+    }
+
+    private ServerHttpRequest buildAuthenticatedRequest(ServerHttpRequest request, String userId, String email, String roles) {
+        long timestamp = System.currentTimeMillis();
+        String signatureData = SignatureUtil.createSignatureData(userId, email, timestamp);
+        String signature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
+
+        return request.mutate()
+                .header(HEADER_USER_ID, userId)
+                .header(HEADER_USER_EMAIL, email)
+                .header(HEADER_USER_ROLES, roles)
+                .header(HEADER_GATEWAY_SIGNATURE, signature)
+                .header(HEADER_GATEWAY_TIMESTAMP, String.valueOf(timestamp))
+                .build();
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
