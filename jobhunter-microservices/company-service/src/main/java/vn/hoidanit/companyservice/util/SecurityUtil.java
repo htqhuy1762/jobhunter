@@ -18,6 +18,10 @@ public class SecurityUtil {
     private static final String HEADER_USER_EMAIL = "X-User-Email";
     private static final String HEADER_USER_ROLES = "X-User-Roles";
 
+    private SecurityUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     /**
      * Get current HTTP request
      */

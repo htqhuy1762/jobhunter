@@ -9,6 +9,10 @@ public class SignatureUtil {
 
     private static final String HMAC_SHA256 = "HmacSHA256";
 
+    private SignatureUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static String createSignatureData(String userId, String userEmail, long timestamp) {
         return String.format("%s:%s:%d",
             userId != null ? userId : "",
