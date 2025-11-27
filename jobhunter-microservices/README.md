@@ -6,25 +6,25 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
 [![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-purple)](https://kafka.apache.org/)
 
-## 📋 Tổng Quan
+## Tổng Quan
 
-Hệ thống JobHunter chuyển đổi từ Monolith sang **Microservices** với event-driven architecture.
+Hệ thống JobHunter là RESTful API được xây dựng bằng Spring Boot, cung cấp các tính năng quản lý tuyển dụng.
 
-### ✨ Tính Năng
+### Tính Năng
 
-- ✅ API Gateway - Routing, Rate Limiting, Circuit Breaker, JWT Authentication  
-- ✅ Service Discovery - Netflix Eureka
-- ✅ RBAC - Role & Permission based authorization
-- ✅ Event-Driven - Kafka messaging  
-- ✅ Service Communication - OpenFeign + Kafka
-- ✅ Distributed Tracing - Zipkin
-- ✅ Resilience Patterns - Circuit Breaker, Retry, Fallback  
-- ✅ Object Storage - MinIO
-- ✅ Monitoring - Actuator + Prometheus + Zipkin
+-  API Gateway - Routing, Rate Limiting, Circuit Breaker, JWT Authentication  
+-  Service Discovery - Netflix Eureka
+-  RBAC - Role & Permission based authorization
+-  Event-Driven - Kafka messaging  
+-  Service Communication - OpenFeign + Kafka
+-  Distributed Tracing - Zipkin
+-  Resilience Patterns - Circuit Breaker, Retry, Fallback  
+-  Object Storage - MinIO
+-  Monitoring - Actuator + Prometheus + Zipkin
 
 ---
 
-## 🏗️ Kiến Trúc
+## Kiến Trúc
 
 ### Infrastructure Services
 
@@ -56,7 +56,7 @@ Hệ thống JobHunter chuyển đổi từ Monolith sang **Microservices** vớ
 
 ---
 
-## 📨 Event-Driven với Kafka
+## Event-Driven với Kafka
 
 ### Kafka Topics
 
@@ -84,7 +84,7 @@ Any Service ──> Notification Service (emails)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Chuẩn bị
 
@@ -131,7 +131,7 @@ docker-compose down -v     # Dừng + xóa data
 
 ---
 
-## 💻 Development Mode
+## Development Mode
 
 ```bash
 # Infrastructure
@@ -150,7 +150,7 @@ cd notification-service && gradlew bootRun
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 Tất cả qua Gateway: `http://localhost:8080`
 
@@ -218,7 +218,7 @@ DELETE /api/v1/subscribers/{id}
 
 ---
 
-## 📊 Monitoring & Observability
+## Monitoring & Observability
 
 Hệ thống tích hợp **Grafana + Prometheus + Loki** để monitoring và logging.
 
@@ -264,18 +264,9 @@ http://localhost:9090
 # {service="job-service"}
 ```
 
-### Metrics Endpoints
-
-Mỗi service expose metrics tại `/actuator/prometheus`:
-- http://localhost:8080/actuator/prometheus (API Gateway)
-- http://localhost:8081/actuator/prometheus (Auth)
-- http://localhost:8082/actuator/prometheus (Company)
-- ...
 ---
 
-## 🗄️ Databases
-
-MySQL tự động tạo 4 databases:
+## Databases
 
 | Database | Service | Mô tả |
 |----------|---------|-------|
@@ -286,64 +277,7 @@ MySQL tự động tạo 4 databases:
 
 ---
 
-## 🔧 Troubleshooting
-
-### Service không kết nối Eureka
-```bash
-docker-compose logs eureka-server
-docker-compose restart eureka-server
-```
-
-### Gateway 503 Error
-```bash
-# Kiểm tra Eureka: http://localhost:8761
-docker-compose restart api-gateway
-```
-
-### Kafka lỗi
-```bash
-docker-compose logs kafka
-docker-compose restart zookeeper kafka
-```
-
-### Email không gửi
-```bash
-# Kiểm tra .env: MAIL_USERNAME và MAIL_PASSWORD
-docker-compose logs notification-service
-```
-
-### Database lỗi
-```bash
-docker-compose exec mysql mysql -uroot -proot -e "SHOW DATABASES;"
-docker-compose restart mysql
-```
-
-### Debug
-```bash
-docker-compose ps                    # Xem status
-docker-compose logs -f [service]     # Xem logs
-docker stats                         # Resource usage
-curl http://localhost:8080/actuator/health
-```
-
----
-
-## ⚠️ Lưu Ý
-
-1. **Database**: Tự động tạo 4 DBs, không cần tạo thủ công
-2. **Email**: Bắt buộc config `MAIL_USERNAME` và `MAIL_PASSWORD` trong `.env`
-3. **Startup Order**: Infrastructure → Eureka → Gateway → Services (Docker Compose tự động)
-4. **Ports**: 8080-8086, 8761, 9000-9001, 9092, 9411, 3306, 6379, 2181
-5. **Kafka Topics**: `job-created`, `job-applications`, `email-notifications`
-6. **JWT**: Access 30 phút, Refresh 7 ngày
-7. **Rate Limit**: 100 req/min per IP
-8. **Circuit Breaker**: 5 failures → OPEN → wait 60s
-9. **MinIO Bucket**: `jobhunter-files` (auto-created)
-10. **Health Check**: http://localhost:8761 (kiểm tra services UP)
-
----
-
-## 🎯 Kiến Trúc
+## Kiến Trúc
 
 ```
 Client → API Gateway (8080) → Eureka (8761) → Services
@@ -369,19 +303,6 @@ Zipkin (tracing)
 
 ---
 
-## 📚 Tài Liệu
-
-- [build-all-services.bat](./build-all-services.bat)
-- [docker-compose.yml](./docker-compose.yml)
-- [.env.example](./.env.example)
-- [API Gateway README](./api-gateway/README.md)
-- [Auth Service README](./auth-service/README.md)
-
----
-
-## 📄 License
+## License
 
 MIT License
-
-**Developed with ❤️ by JobHunter Team**
-
