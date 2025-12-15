@@ -11,11 +11,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import vn.hoidanit.authservice.util.SignatureUtil;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +27,6 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
     private static final String HEADER_USER_ID = "X-User-Id";
     private static final String HEADER_USER_EMAIL = "X-User-Email";
     private static final String HEADER_USER_ROLES = "X-User-Roles";
-    private static final String HMAC_SHA256 = "HmacSHA256";
 
     @Value("${gateway.signature.secret}")
     private String gatewaySignatureSecret;
@@ -50,25 +47,33 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
         if (gatewaySignature != null && gatewayTimestamp != null && gatewaySignatureEnabled) {
             log.debug("Validating Gateway signature for user: {}", userEmail);
 
-            String signatureData = createSignatureData(userId, userEmail, gatewayTimestamp);
-            String expectedSignature = generateSignature(signatureData, gatewaySignatureSecret);
+            try {
+                long timestamp = Long.parseLong(gatewayTimestamp);
+                String signatureData = SignatureUtil.createSignatureData(userId, userEmail, timestamp);
 
-            if (gatewaySignature.equals(expectedSignature)) {
-                log.debug("Gateway signature validated for user: {}", userEmail);
+                if (SignatureUtil.verifySignature(signatureData, gatewaySignature, gatewaySignatureSecret)) {
+                    log.debug("Gateway signature validated for user: {}", userEmail);
 
-                List<SimpleGrantedAuthority> authorities = parseAuthorities(userRoles);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
+                    List<SimpleGrantedAuthority> authorities = parseAuthorities(userRoles);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                filterChain.doFilter(request, response);
-                return;
-            } else {
-                log.error("Invalid Gateway signature - request rejected");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    filterChain.doFilter(request, response);
+                    return;
+                } else {
+                    log.error("Invalid Gateway signature - request rejected");
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Invalid Gateway signature\"}");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                log.error("Invalid timestamp format: {}", gatewayTimestamp);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"Invalid Gateway signature\"}");
+                response.getWriter().write("{\"error\": \"Invalid timestamp format\"}");
                 return;
             }
         }
@@ -76,21 +81,6 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String createSignatureData(String userId, String email, String timestamp) {
-        return userId + ":" + email + ":" + timestamp;
-    }
-
-    private String generateSignature(String data, String secret) {
-        try {
-            Mac sha256Hmac = Mac.getInstance(HMAC_SHA256);
-            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_SHA256);
-            sha256Hmac.init(secretKey);
-            byte[] hash = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return java.util.Base64.getEncoder().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate signature", e);
-        }
-    }
 
     private List<SimpleGrantedAuthority> parseAuthorities(String rolesString) {
         if (rolesString == null || rolesString.isEmpty()) {

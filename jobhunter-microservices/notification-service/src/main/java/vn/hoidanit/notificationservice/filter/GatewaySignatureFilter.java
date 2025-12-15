@@ -73,9 +73,8 @@ public class GatewaySignatureFilter extends OncePerRequestFilter {
             }
 
             String signatureData = SignatureUtil.createSignatureData(userId, userEmail, timestamp);
-            String expectedSignature = SignatureUtil.generateSignature(signatureData, gatewaySignatureSecret);
 
-            if (!signature.equals(expectedSignature)) {
+            if (!SignatureUtil.verifySignature(signatureData, signature, gatewaySignatureSecret)) {
                 log.warn("Invalid signature. Path: {}", request.getRequestURI());
                 sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, ERROR_INVALID_SIGNATURE);
                 return;
