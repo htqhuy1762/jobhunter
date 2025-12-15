@@ -1,4 +1,4 @@
-package vn.hoidanit.notificationservice.service;
+package vn.hoidanit.notificationservice.kafka.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

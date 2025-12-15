@@ -1,4 +1,4 @@
-package vn.hoidanit.jobservice.service;
+package vn.hoidanit.jobservice.kafka.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import vn.hoidanit.jobservice.config.KafkaProducerConfig;
 import vn.hoidanit.jobservice.domain.Job;
 import vn.hoidanit.jobservice.domain.Skill;
 import vn.hoidanit.jobservice.dto.JobCreatedEvent;
+import vn.hoidanit.jobservice.service.CompanyFetchService;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;

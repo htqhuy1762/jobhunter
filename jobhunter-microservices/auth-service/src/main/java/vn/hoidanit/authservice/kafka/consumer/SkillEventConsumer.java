@@ -1,4 +1,4 @@
-package vn.hoidanit.authservice.kafka;
+package vn.hoidanit.authservice.kafka.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

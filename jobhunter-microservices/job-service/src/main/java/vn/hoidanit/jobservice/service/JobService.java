@@ -18,6 +18,7 @@ import vn.hoidanit.jobservice.dto.ResCreateJobDTO;
 import vn.hoidanit.jobservice.dto.ResJobDTO;
 import vn.hoidanit.jobservice.dto.ResUpdateJobDTO;
 import vn.hoidanit.jobservice.dto.ResultPaginationDTO;
+import vn.hoidanit.jobservice.kafka.producer.JobEventProducer;
 import vn.hoidanit.jobservice.repository.JobRepository;
 import vn.hoidanit.jobservice.repository.SkillRepository;
 

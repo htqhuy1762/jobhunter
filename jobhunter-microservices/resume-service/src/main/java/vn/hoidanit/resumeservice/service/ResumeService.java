@@ -19,6 +19,7 @@ import vn.hoidanit.resumeservice.dto.ResUpdateResumeDTO;
 import vn.hoidanit.resumeservice.dto.ResumeApplicationEvent;
 import vn.hoidanit.resumeservice.dto.ResultPaginationDTO;
 import vn.hoidanit.resumeservice.dto.UserDTO;
+import vn.hoidanit.resumeservice.kafka.producer.ResumeEventProducer;
 import vn.hoidanit.resumeservice.repository.ResumeRepository;
 import vn.hoidanit.resumeservice.util.SecurityUtil;
 

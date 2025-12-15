@@ -1,10 +1,11 @@
-package vn.hoidanit.jobservice.service;
+package vn.hoidanit.jobservice.kafka.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import vn.hoidanit.jobservice.dto.ResumeApplicationEvent;
+import vn.hoidanit.jobservice.service.JobService;
 
 @Service
 @RequiredArgsConstructor

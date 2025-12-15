@@ -1,4 +1,4 @@
-package vn.hoidanit.resumeservice.service;
+package vn.hoidanit.resumeservice.kafka.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

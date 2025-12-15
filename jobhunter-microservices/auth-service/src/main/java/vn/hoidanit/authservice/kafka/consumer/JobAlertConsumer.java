@@ -1,18 +1,23 @@
-package vn.hoidanit.authservice.service;
+package vn.hoidanit.authservice.kafka.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import vn.hoidanit.authservice.domain.Subscriber;
 import vn.hoidanit.authservice.dto.JobAlertEvent;
 import vn.hoidanit.authservice.dto.JobCreatedEvent;
+import vn.hoidanit.authservice.service.SubscriberService;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+/**
+ * Kafka consumer for job alerts
+ * Listens to job creation events and notifies matching subscribers
+ */
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class JobAlertConsumer {
