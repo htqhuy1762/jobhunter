@@ -6,6 +6,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
@@ -35,11 +36,17 @@ public class SignatureUtil {
     }
 
     public static boolean verifySignature(String data, String signature, String secret) {
-        if (signature == null || data == null) {
+        if (signature == null || data == null || secret == null) {
             return false;
         }
+
         String expectedSignature = generateSignature(data, secret);
-        return signature.equals(expectedSignature);
+
+        // Use timing-safe comparison to prevent timing attacks
+        return MessageDigest.isEqual(
+            signature.getBytes(StandardCharsets.UTF_8),
+            expectedSignature.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     public static String createSignatureData(String userId, String email, long timestamp) {
