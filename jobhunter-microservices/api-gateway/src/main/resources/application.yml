@@ -7,30 +7,6 @@ spring:
 
   cloud:
     gateway:
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "http://localhost:3000"
-              - "http://localhost:4173"
-              - "http://localhost:5173"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - PATCH
-              - OPTIONS
-            allowedHeaders:
-              - "*"
-            exposedHeaders:
-              - Authorization
-              - X-Total-Count
-              - Content-Type
-              - Accept
-            allowCredentials: true
-            maxAge: 3600
-
       routes:
         # Auth Service - Public endpoints (NO JWT required)
         - id: auth-service-public
@@ -157,6 +133,7 @@ spring:
 
       default-filters:
         - AddRequestHeader=X-Gateway-Version, 1.0
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
   data:
     redis:
