@@ -55,6 +55,12 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+
+            // Skip JWT validation for OPTIONS requests (CORS preflight)
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod().name())) {
+                return chain.filter(exchange);
+            }
+
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
@@ -137,6 +143,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
+
         log.error("Authentication error: {}", err);
         return response.setComplete();
     }
