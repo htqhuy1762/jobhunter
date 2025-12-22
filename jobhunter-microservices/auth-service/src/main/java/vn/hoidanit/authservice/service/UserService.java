@@ -181,5 +181,25 @@ public class UserService {
             return false;
         }
     }
+
+    /**
+     * Update user's own profile (self-update)
+     * Only allows updating safe fields: name, age, gender, address
+     * Does NOT allow changing: email, password, role, company
+     */
+    public User handleUpdateOwnProfile(String email, User updateData) {
+        User currentUser = this.handleGetUserByUsername(email);
+        if (currentUser == null) {
+            return null;
+        }
+
+        // Only update safe fields
+        currentUser.setName(updateData.getName());
+        currentUser.setAge(updateData.getAge());
+        currentUser.setGender(updateData.getGender());
+        currentUser.setAddress(updateData.getAddress());
+
+        return this.userRepository.save(currentUser);
+    }
 }
 
