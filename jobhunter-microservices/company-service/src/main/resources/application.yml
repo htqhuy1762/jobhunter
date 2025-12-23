@@ -20,6 +20,19 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
+  # Redis Configuration for Caching
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: 6379
+      timeout: 60000
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000  # Default 10 minutes in milliseconds
+
 # Gateway Security - MUST match with API Gateway secret
 gateway:
   signature:

@@ -3,6 +3,8 @@ package vn.hoidanit.jobservice.service;
 import java.time.Instant;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,6 +29,7 @@ public class SkillService {
         return this.skillRepository.existsByName(name);
     }
 
+    @Cacheable(value = "skills", key = "#id")
     public Skill fetchSkillById (long id) {
         Optional<Skill> skillOptional = this.skillRepository.findById(id);
         if(skillOptional.isPresent()) {
@@ -35,6 +38,7 @@ public class SkillService {
         return null;
     }
 
+    @CacheEvict(value = {"skills", "jobs", "jobs:details"}, allEntries = true)
     public Skill createSkill (Skill s) {
         Skill savedSkill = this.skillRepository.save(s);
 
@@ -44,6 +48,7 @@ public class SkillService {
         return savedSkill;
     }
 
+    @CacheEvict(value = {"skills", "jobs", "jobs:details"}, allEntries = true)
     public Skill updateSkill(Skill s) {
         Skill updatedSkill = this.skillRepository.save(s);
 
@@ -53,6 +58,7 @@ public class SkillService {
         return updatedSkill;
     }
 
+    @CacheEvict(value = {"skills", "jobs", "jobs:details"}, allEntries = true)
     public void deleteSkill(long id) {
         Optional<Skill> skillOptional = this.skillRepository.findById(id);
         Skill currentSkill = skillOptional.get();

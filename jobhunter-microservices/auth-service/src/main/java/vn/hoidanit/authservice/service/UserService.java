@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -70,6 +72,7 @@ public class UserService {
         return rs;
     }
 
+    @CacheEvict(value = {"users", "users:permissions"}, allEntries = true)
     public User handleUpdateUser(User user) {
         User updateUser = this.handleGetUserById(user.getId());
         if (updateUser != null) {
@@ -89,10 +92,12 @@ public class UserService {
         return updateUser;
     }
 
+    @Cacheable(value = "users", key = "#email")
     public User handleGetUserByUsername(String email) {
         return this.userRepository.findByEmail(email);
     }
 
+    @Cacheable(value = "users:permissions", key = "#email")
     public User handleGetUserByUsernameWithPermissions(String email) {
         return this.userRepository.findByEmailWithRoleAndPermissions(email);
     }
@@ -187,6 +192,7 @@ public class UserService {
      * Only allows updating safe fields: name, age, gender, address
      * Does NOT allow changing: email, password, role, company
      */
+    @CacheEvict(value = {"users", "users:permissions"}, key = "#email")
     public User handleUpdateOwnProfile(String email, User updateData) {
         User currentUser = this.handleGetUserByUsername(email);
         if (currentUser == null) {

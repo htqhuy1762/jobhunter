@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,6 +33,7 @@ public class JobService {
     private final CompanyFetchService companyFetchService;
     private final JobEventProducer jobEventProducer;
 
+    @CacheEvict(value = {"jobs", "jobs:details"}, allEntries = true)
     public ResCreateJobDTO create(Job job) {
         attachSkillsToJob(job);
         Job savedJob = jobRepository.save(job);
@@ -41,16 +44,19 @@ public class JobService {
         return mapToCreateDTO(savedJob);
     }
 
+    @Cacheable(value = "jobs", key = "#id")
     public Optional<Job> fetchJobById(long id) {
         return jobRepository.findById(id);
     }
 
+    @Cacheable(value = "jobs:details", key = "#id")
     public ResJobDTO fetchJobByIdWithCompany(long id) {
         return jobRepository.findById(id)
                 .map(this::convertToResJobDTO)
                 .orElse(null);
     }
 
+    @CacheEvict(value = {"jobs", "jobs:details"}, allEntries = true)
     public ResUpdateJobDTO update(Job job, Job existingJob) {
         attachSkillsToJob(job);
         updateJobFields(existingJob, job);
@@ -58,6 +64,7 @@ public class JobService {
         return mapToUpdateDTO(savedJob);
     }
 
+    @CacheEvict(value = {"jobs", "jobs:details"}, allEntries = true)
     public void delete(long id) {
         jobRepository.deleteById(id);
     }

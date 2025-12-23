@@ -1,8 +1,8 @@
 package vn.hoidanit.authservice.service;
 
 import java.util.List;
-import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -44,6 +44,7 @@ public class RoleService {
         return this.roleRepository.save(role);
     }
 
+    @CacheEvict(value = {"roles", "users", "users:permissions"}, allEntries = true)
     public Role update(Role role) {
         Role roleDB = this.fetchById(role.getId());
         if (roleDB != null) {
@@ -67,6 +68,7 @@ public class RoleService {
         return roleDB;
     }
 
+    @CacheEvict(value = {"roles", "users", "users:permissions"}, allEntries = true)
     public void delete(long id) {
         this.roleRepository.deleteById(id);
     }

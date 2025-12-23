@@ -32,6 +32,10 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 
+    // Redis & Cache
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+
     // Kafka for event-driven architecture
     implementation("org.springframework.kafka:spring-kafka")
 

@@ -1,5 +1,6 @@
 package vn.hoidanit.jobservice.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -26,14 +27,18 @@ public class CompanyFetchService {
     private final CompanyClient companyClient;
 
     /**
-     * Fetch company information with Circuit Breaker and Retry protection.
+     * Fetch company information with Circuit Breaker, Retry, and Cache protection.
      *
      * This method is called from OTHER services (e.g., JobService),
      * so Spring AOP proxy can intercept it properly.
      *
+     * Caching: Company info is cached for 1 hour to reduce inter-service calls.
+     * Cache is NOT used if the result is fallback (name == 'Company information unavailable').
+     *
      * @param companyId The company ID to fetch
      * @return CompanyInfo with fallback if service is down
      */
+    @Cacheable(value = "company-fetch", key = "#companyId", unless = "#result.name == 'Company information unavailable'")
     @CircuitBreaker(name = "companyService", fallbackMethod = "fetchCompanyFallback")
     @Retry(name = "companyService")
     public ResJobDTO.CompanyInfo fetchCompany(Long companyId) {

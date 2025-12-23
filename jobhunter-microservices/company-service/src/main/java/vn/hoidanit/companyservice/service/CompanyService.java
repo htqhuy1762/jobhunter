@@ -2,6 +2,8 @@ package vn.hoidanit.companyservice.service;
 
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,15 +23,18 @@ public class CompanyService {
         return companyRepository.findById(id);
     }
 
+    @CacheEvict(value = {"companies", "companies:page"}, allEntries = true)
     public Company createCompany(Company company) {
         return companyRepository.save(company);
     }
 
+    @Cacheable(value = "companies:page", key = "#pageable.pageNumber + '_' + #pageable.pageSize")
     public ResultPaginationDTO getAllCompanies(Specification<Company> spec, Pageable pageable) {
         Page<Company> companyPage = companyRepository.findAll(spec, pageable);
         return buildPaginationResult(companyPage, companyPage.getContent(), pageable);
     }
 
+    @CacheEvict(value = {"companies", "companies:page"}, allEntries = true)
     public Company updateCompany(Company company) {
         return companyRepository.findById(company.getId())
                 .map(existingCompany -> {
@@ -39,6 +44,7 @@ public class CompanyService {
                 .orElse(null);
     }
 
+    @CacheEvict(value = {"companies", "companies:page"}, allEntries = true)
     public void deleteCompany(long id) {
         companyRepository.deleteById(id);
     }
