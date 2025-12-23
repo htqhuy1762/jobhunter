@@ -50,7 +50,6 @@ public class PermissionService {
         return permissionDB;
     }
 
-    @CacheEvict(value = {"permissions", "permissions:check", "roles", "users:permissions"}, allEntries = true)
     public void delete(long id) {
         this.permissionRepository.deleteById(id);
     }

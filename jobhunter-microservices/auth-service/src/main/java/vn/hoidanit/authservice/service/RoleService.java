@@ -68,7 +68,6 @@ public class RoleService {
         return roleDB;
     }
 
-    @CacheEvict(value = {"roles", "users", "users:permissions"}, allEntries = true)
     public void delete(long id) {
         this.roleRepository.deleteById(id);
     }
